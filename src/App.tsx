@@ -20,6 +20,7 @@ import { twMerge } from 'tailwind-merge';
 
 import { SalesRecord, CompetitiveProduct } from './types';
 import { generateMockData, generateCompetitiveData } from './mockData';
+import StrategicMap from './components/StrategicMap';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -1172,6 +1173,8 @@ export default function App() {
               </div>
             </div>
           </main>
+        ) : activeMenu === '战略地图' ? (
+          <StrategicMap />
         ) : (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center space-y-4 max-w-md">

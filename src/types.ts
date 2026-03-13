@@ -51,3 +51,14 @@ export interface GrowthMetrics {
   mom: number;
   yoy: number;
 }
+
+export interface StrategicDemandItem {
+  name: string;
+  popularity: number;
+}
+
+export interface StrategicCategory {
+  title: string;
+  topItem: StrategicDemandItem;
+  items: StrategicDemandItem[];
+}

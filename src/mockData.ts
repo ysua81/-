@@ -1,5 +1,116 @@
-import { SalesRecord, CompetitiveProduct } from './types';
+import { SalesRecord, CompetitiveProduct, StrategicCategory } from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
+
+export const generateStrategicMapData = (): StrategicCategory[] => {
+  const categories = [
+    {
+      title: '人群需求',
+      topItem: { name: '婴儿', popularity: 32728092 },
+      items: [
+        { name: '儿童', popularity: 31138385 },
+        { name: '宝宝', popularity: 29837075 },
+        { name: '成人', popularity: 5047646 },
+        { name: '大人', popularity: 4407658 },
+        { name: '新生', popularity: 4059493 },
+        { name: '一岁', popularity: 3482294 },
+        { name: '幼儿', popularity: 3196079 },
+        { name: '游泳', popularity: 3076304 },
+        { name: '女士', popularity: 1933941 },
+      ]
+    },
+    {
+      title: '使用需求',
+      topItem: { name: '泡脚', popularity: 28349066 },
+      items: [
+        { name: '游泳', popularity: 23249082 },
+        { name: '泡澡', popularity: 13164853 },
+        { name: '滑雪', popularity: 5055012 },
+        { name: '洗澡', popularity: 4949664 },
+        { name: '拳击', popularity: 4923857 },
+        { name: '洗头', popularity: 4815870 },
+        { name: '洗脚', popularity: 3788488 },
+        { name: '坐浴', popularity: 3320303 },
+        { name: '训练', popularity: 2564817 },
+      ]
+    },
+    {
+      title: '其他需求',
+      topItem: { name: '消耗', popularity: 758666 },
+      items: [
+        { name: 'kk', popularity: 661780 },
+        { name: '成长', popularity: 619851 },
+        { name: '用品', popularity: 536219 },
+        { name: '人家', popularity: 487454 },
+        { name: '以上', popularity: 367764 },
+        { name: '一名', popularity: 348520 },
+        { name: '抽抽', popularity: 346629 },
+        { name: '体力', popularity: 313432 },
+        { name: '用盆', popularity: 285912 },
+      ]
+    },
+    {
+      title: '功能需求',
+      topItem: { name: '充气', popularity: 21210097 },
+      items: [
+        { name: '折叠', popularity: 12666251 },
+        { name: '游泳', popularity: 10563711 },
+        { name: '气垫', popularity: 5242931 },
+        { name: '电动', popularity: 2972861 },
+        { name: '便携', popularity: 2244701 },
+        { name: '防水', popularity: 2195839 },
+        { name: '带轮', popularity: 2115053 },
+        { name: '自动', popularity: 2057557 },
+        { name: '喷水', popularity: 2011542 },
+      ]
+    },
+    {
+      title: '品牌需求',
+      topItem: { name: 'stokke', popularity: 2504485 },
+      items: [
+        { name: '卡达', popularity: 2478609 },
+        { name: '哈卡', popularity: 2145882 },
+        { name: 'iuu', popularity: 1657759 },
+        { name: 'kk', popularity: 1129509 },
+        { name: '卡曼', popularity: 1037422 },
+        { name: '迪卡侬', popularity: 891465 },
+        { name: '肯德基', popularity: 866610 },
+        { name: '英发', popularity: 771820 },
+        { name: '气床', popularity: 721144 },
+      ]
+    },
+    {
+      title: '品类需求',
+      topItem: { name: '玩具', popularity: 35459759 },
+      items: [
+        { name: '脚桶', popularity: 25112762 },
+        { name: '泡脚桶', popularity: 21776434 },
+        { name: '水枪', popularity: 19000478 },
+        { name: '餐椅', popularity: 16985697 },
+        { name: '泳镜', popularity: 15086882 },
+        { name: '泳圈', popularity: 11002087 },
+        { name: '充气床', popularity: 8208079 },
+        { name: '泳帽', popularity: 7800672 },
+        { name: '洗澡盆', popularity: 6903629 },
+      ]
+    },
+    {
+      title: '场景需求',
+      topItem: { name: '家用', popularity: 0 }, // Image doesn't show popularity for top scene
+      items: [
+        { name: '户外', popularity: 0 },
+        { name: '飞机', popularity: 0 },
+        { name: '露营', popularity: 0 },
+        { name: '地铺', popularity: 0 },
+        { name: '水上', popularity: 0 },
+        { name: '旅行', popularity: 0 },
+        { name: '火车', popularity: 0 },
+        { name: '高铁', popularity: 0 },
+        { name: '室内', popularity: 0 },
+      ]
+    }
+  ];
+  return categories as StrategicCategory[];
+};
 
 const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
 const categories = [
