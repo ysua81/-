@@ -45,6 +45,7 @@ export interface SalesRecord {
   salesVolume: number;
   costAmount: number;
   businessOwner: string;
+  salesperson: string;
 }
 
 export interface GrowthMetrics {

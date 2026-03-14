@@ -116,6 +116,7 @@ export default function App() {
     { id: 'categoryL3', label: '三级类目' },
     { id: 'categoryL4', label: '四级类目' },
     { id: 'businessOwner', label: '业务负责人' },
+    { id: 'salesperson', label: '销售员' },
   ];
 
   // Reset filter value when dimension changes
@@ -147,6 +148,9 @@ export default function App() {
       }
       if (selectedDimensionId === 'businessOwner') {
         return d.businessOwner === selectedFilterValue;
+      }
+      if (selectedDimensionId === 'salesperson') {
+        return d.salesperson === selectedFilterValue;
       }
       if (['distributorId', 'categoryL2', 'categoryL3', 'categoryL4'].includes(selectedDimensionId)) {
         return String((d as any)[selectedDimensionId]).toLowerCase().includes(selectedFilterValue.toLowerCase());
@@ -232,6 +236,7 @@ export default function App() {
       if (selectedDimensionId === 'isWholesale') return d.isWholesale ? '代批' : '非代批';
       if (selectedDimensionId === 'customerType') return d.customerType === 'New' ? '新客' : '老客';
       if (selectedDimensionId === 'businessOwner') return d.businessOwner;
+      if (selectedDimensionId === 'salesperson') return d.salesperson;
       return String((d as any)[selectedDimensionId]);
     });
     return [...new Set(vals)].sort().reverse();
@@ -379,6 +384,8 @@ export default function App() {
             key = d.customerType === 'New' ? '新客' : '老客';
           } else if (dim.id === 'businessOwner') {
             key = d.businessOwner;
+          } else if (dim.id === 'salesperson') {
+            key = d.salesperson;
           } else {
             key = String((d as any)[dim.id]);
           }
