@@ -18,9 +18,42 @@ import { generateStrategicMapData } from '../mockData';
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 
+const ALIBABA_CATEGORIES = {
+  '玩具': {
+    '运动、休闲、传统玩具': ['戏水玩具', '婴儿游泳池'],
+    '充气玩具': ['其他充气玩具']
+  },
+  '运动户外': {
+    '涉水运动用品': ['漂流船、皮划艇、充气艇', '冲浪、滑水、帆板', '水上充气床、充气浮排'],
+    '按摩保健': ['保健护具'],
+    '游艺设施': ['淘气堡', '游泳池'],
+    '滑雪用品': ['滑雪板', '滑雪圈'],
+    '游泳用品': ['游泳圈'],
+    '健身器材用品': ['拳击用品']
+  },
+  '收纳清洁用具': {
+    '卫浴整理用具': ['泡脚盆、沐浴桶、折叠浴桶', '婴儿浴盆']
+  },
+  '家纺家饰': {
+    '枕芯类': ['U型枕']
+  },
+  '家装建材': {
+    '休闲、户外家具': ['充气沙发', '充气床']
+  },
+  '居家日用': {
+    '居家日用': ['鞋套、鞋刷、鞋用品', '冰垫']
+  },
+  '宠物及园艺': {
+    '猫/狗美容清洁用品': ['宠物浴池/浴盆']
+  }
+};
+
 export default function StrategicMap() {
   const [strategicData] = useState<StrategicCategory[]>(() => generateStrategicMapData());
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [platform, setPlatform] = useState('阿里巴巴');
+  const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
+  const [isCategoryOpen, setIsCategoryOpen] = useState(false);
 
   const handleWordSelect = (word: string) => {
     if (!selectedWords.includes(word)) {
@@ -56,8 +89,13 @@ export default function StrategicMap() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">平台</span>
               <div className="relative">
-                <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]">
-                  <option>淘系平台</option>
+                <select 
+                  value={platform}
+                  onChange={(e) => setPlatform(e.target.value)}
+                  className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]"
+                >
+                  <option value="阿里巴巴">阿里巴巴</option>
+                  <option value="亚马逊">亚马逊</option>
                 </select>
                 <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -65,12 +103,77 @@ export default function StrategicMap() {
 
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">类目</span>
-              <div className="relative">
-                <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]">
-                  <option>泳池</option>
-                </select>
-                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
-              </div>
+              {platform === '阿里巴巴' ? (
+                <div className="relative">
+                  <button 
+                    onClick={() => setIsCategoryOpen(!isCategoryOpen)}
+                    className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[240px] text-left"
+                  >
+                    <span className="truncate">{categoryPath.join(' > ')}</span>
+                    <ChevronDown size={14} className="text-slate-400 ml-2 shrink-0" />
+                  </button>
+
+                  {isCategoryOpen && (
+                    <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] flex animate-in fade-in slide-in-from-top-2 duration-200">
+                      {/* Level 1 */}
+                      <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto">
+                        {Object.keys(ALIBABA_CATEGORIES).map(l1 => (
+                          <button
+                            key={l1}
+                            onClick={() => setCategoryPath([l1, Object.keys(ALIBABA_CATEGORIES[l1 as keyof typeof ALIBABA_CATEGORIES])[0], (ALIBABA_CATEGORIES[l1 as keyof typeof ALIBABA_CATEGORIES] as any)[Object.keys(ALIBABA_CATEGORIES[l1 as keyof typeof ALIBABA_CATEGORIES])[0]][0]])}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                              categoryPath[0] === l1 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                            )}
+                          >
+                            {l1}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Level 2 */}
+                      <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto">
+                        {Object.keys(ALIBABA_CATEGORIES[categoryPath[0] as keyof typeof ALIBABA_CATEGORIES] || {}).map(l2 => (
+                          <button
+                            key={l2}
+                            onClick={() => setCategoryPath([categoryPath[0], l2, (ALIBABA_CATEGORIES[categoryPath[0] as keyof typeof ALIBABA_CATEGORIES] as any)[l2][0]])}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                              categoryPath[1] === l2 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                            )}
+                          >
+                            {l2}
+                          </button>
+                        ))}
+                      </div>
+                      {/* Level 3 */}
+                      <div className="w-48 p-2 max-h-80 overflow-y-auto">
+                        {((ALIBABA_CATEGORIES[categoryPath[0] as keyof typeof ALIBABA_CATEGORIES] as any)?.[categoryPath[1]] || []).map((l3: string) => (
+                          <button
+                            key={l3}
+                            onClick={() => {
+                              setCategoryPath([categoryPath[0], categoryPath[1], l3]);
+                              setIsCategoryOpen(false);
+                            }}
+                            className={cn(
+                              "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                              categoryPath[2] === l3 ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
+                            )}
+                          >
+                            {l3}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <div className="relative">
+                  <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]">
+                    <option>泳池</option>
+                  </select>
+                  <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                </div>
+              )}
             </div>
 
             <div className="flex items-center gap-2">
