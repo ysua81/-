@@ -113,6 +113,7 @@ export const generateStrategicMapData = (): StrategicCategory[] => {
 };
 
 const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
+const businessOwners = ['张三', '李四', '王五', '赵六', '孙七'];
 const categories = [
   { l2: '服装', l3: '女装', l4: '连衣裙' },
   { l2: '服装', l3: '女装', l4: 'T恤' },
@@ -209,6 +210,7 @@ export const generateMockData = (count: number = 500): SalesRecord[] => {
       salesAmount: amount,
       salesVolume: Math.floor(Math.random() * 20) + 1,
       costAmount: amount * (0.6 + Math.random() * 0.2), // 60-80% cost
+      businessOwner: businessOwners[Math.floor(Math.random() * businessOwners.length)],
     });
   }
   return data;

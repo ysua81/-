@@ -36,7 +36,7 @@ const SortableHeader = ({
   align = 'left' 
 }: { 
   label: string; 
-  sortKey: keyof CompetitiveProduct | 'rank'; 
+  sortKey: string; 
   currentSort: { key: string; direction: 'asc' | 'desc' } | null; 
   onSort: (key: any) => void;
   align?: 'left' | 'right' | 'center';
@@ -53,10 +53,12 @@ const SortableHeader = ({
     >
       <div className={cn("flex items-center gap-1", align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start')}>
         <span>{label}</span>
-        <div className="flex flex-col -space-y-1">
-          <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-          <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-        </div>
+        {sortKey !== 'id' && (
+          <div className="flex flex-col -space-y-1">
+            <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+            <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+          </div>
+        )}
       </div>
     </th>
   );
@@ -71,6 +73,7 @@ export default function App() {
   const [sortConfig, setSortConfig] = useState<{ key: keyof CompetitiveProduct | 'rank'; direction: 'asc' | 'desc' } | null>(null);
   const [originFilter, setOriginFilter] = useState<string | 'all'>('all');
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
+  const [tableSortConfig, setTableSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   const provinces = [
     '全部', '北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', 
@@ -112,7 +115,7 @@ export default function App() {
     { id: 'categoryL2', label: '二级类目' },
     { id: 'categoryL3', label: '三级类目' },
     { id: 'categoryL4', label: '四级类目' },
-    { id: 'month', label: '月份' },
+    { id: 'businessOwner', label: '业务负责人' },
   ];
 
   // Reset filter value when dimension changes
@@ -142,9 +145,8 @@ export default function App() {
         const val = d.customerType === 'New' ? '新客' : '老客';
         return val === selectedFilterValue;
       }
-      if (selectedDimensionId === 'month') {
-        const val = format(parseISO(d.date), 'yyyy-MM');
-        return val === selectedFilterValue;
+      if (selectedDimensionId === 'businessOwner') {
+        return d.businessOwner === selectedFilterValue;
       }
       if (['distributorId', 'categoryL2', 'categoryL3', 'categoryL4'].includes(selectedDimensionId)) {
         return String((d as any)[selectedDimensionId]).toLowerCase().includes(selectedFilterValue.toLowerCase());
@@ -185,16 +187,16 @@ export default function App() {
     if (sortConfig) {
       rankedData.sort((a, b) => {
         if (sortConfig.key === 'rank') {
-          return sortConfig.direction === 'asc' ? a._rank - b._rank : b._rank - a._rank;
+          return sortConfig.direction === 'asc' ? b._rank - a._rank : a._rank - b._rank;
         }
         const aVal = a[sortConfig.key as keyof CompetitiveProduct];
         const bVal = b[sortConfig.key as keyof CompetitiveProduct];
 
         if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortConfig.direction === 'asc' ? aVal - bVal : bVal - aVal;
+          return sortConfig.direction === 'asc' ? bVal - aVal : aVal - bVal;
         }
         if (typeof aVal === 'string' && typeof bVal === 'string') {
-          return sortConfig.direction === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+          return sortConfig.direction === 'asc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
         }
         return 0;
       });
@@ -206,10 +208,20 @@ export default function App() {
   const handleSort = (key: keyof CompetitiveProduct | 'rank') => {
     setSortConfig(prev => {
       if (prev?.key === key) {
-        if (prev.direction === 'desc') return { key, direction: 'asc' };
+        if (prev.direction === 'asc') return { key, direction: 'desc' };
         return null;
       }
-      return { key, direction: 'desc' };
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const handleTableSort = (key: string) => {
+    setTableSortConfig(prev => {
+      if (prev?.key === key) {
+        if (prev.direction === 'asc') return { key, direction: 'desc' };
+        return null;
+      }
+      return { key, direction: 'asc' };
     });
   };
 
@@ -219,10 +231,10 @@ export default function App() {
     const vals = data.map(d => {
       if (selectedDimensionId === 'isWholesale') return d.isWholesale ? '代批' : '非代批';
       if (selectedDimensionId === 'customerType') return d.customerType === 'New' ? '新客' : '老客';
-      if (selectedDimensionId === 'month') return format(parseISO(d.date), 'yyyy-MM');
+      if (selectedDimensionId === 'businessOwner') return d.businessOwner;
       return String((d as any)[selectedDimensionId]);
     });
-    return [...new Set(vals)].sort().reverse(); // Reverse for month to show latest first
+    return [...new Set(vals)].sort().reverse();
   }, [data, selectedDimensionId]);
 
   // Trend Data Calculations
@@ -365,8 +377,8 @@ export default function App() {
             key = d.isWholesale ? '代批' : '非代批';
           } else if (dim.id === 'customerType') {
             key = d.customerType === 'New' ? '新客' : '老客';
-          } else if (dim.id === 'month') {
-            key = format(parseISO(d.date), 'yyyy-MM');
+          } else if (dim.id === 'businessOwner') {
+            key = d.businessOwner;
           } else {
             key = String((d as any)[dim.id]);
           }
@@ -381,7 +393,24 @@ export default function App() {
             metrics: calculateGrowth(records)
           }))
           .sort((a, b) => {
-            if (dim.id === 'month') return b.id.localeCompare(a.id);
+            if (tableSortConfig) {
+              const { key, direction } = tableSortConfig;
+              let valA: any;
+              let valB: any;
+
+              if (key === 'id') {
+                valA = a.id;
+                valB = b.id;
+              } else {
+                // Handle nested metrics keys
+                valA = (a.metrics as any)[key];
+                valB = (b.metrics as any)[key];
+              }
+
+              if (valA < valB) return direction === 'asc' ? 1 : -1;
+              if (valA > valB) return direction === 'asc' ? -1 : 1;
+              return 0;
+            }
             return b.metrics.total - a.metrics.total;
           });
 
@@ -392,7 +421,7 @@ export default function App() {
           breakdown
         };
       });
-  }, [data, selectedDimensionId, selectedFilterValue, selectedMetric]);
+  }, [data, selectedDimensionId, selectedFilterValue, selectedMetric, tableSortConfig]);
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -593,37 +622,37 @@ export default function App() {
             </section>
 
             {/* KPI Cards */}
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <MetricCard 
                 title={selectedMetric === 'salesAmount' ? "总销售额" : "总销量"} 
                 value={selectedMetric === 'salesAmount' ? `¥${metrics.total.toLocaleString()}` : metrics.total.toLocaleString()} 
                 trend={metrics.wow >= 0 ? 'up' : 'down'} 
-                icon={<ShoppingBag className="text-indigo-600" size={20} />}
+                icon={<ShoppingBag className="text-indigo-600" size={18} />}
               />
               <MetricCard 
                 title="订单总量" 
-                value="12,482" 
-                trend="up" 
-                icon={<LayoutDashboard className="text-emerald-600" size={20} />}
+                value={data.length.toLocaleString()} 
+                trend={metrics.mom >= 0 ? 'up' : 'down'} 
+                icon={<LayoutDashboard className="text-emerald-600" size={18} />}
               />
               <MetricCard 
                 title="活跃客户数" 
-                value="8,921" 
-                trend="down" 
-                icon={<Users className="text-amber-600" size={20} />}
+                value={new Set(data.map(d => d.distributorId)).size.toLocaleString()} 
+                trend={metrics.wow < 0 ? 'up' : 'down'} 
+                icon={<Users className="text-amber-600" size={18} />}
               />
               <MetricCard 
                 title="平均客单价" 
-                value="¥245" 
-                trend="up" 
-                icon={<TrendingUp className="text-rose-600" size={20} />}
+                value={`¥${Math.floor(metrics.total / (data.length || 1))}`} 
+                trend={metrics.yoy >= 0 ? 'up' : 'down'} 
+                icon={<TrendingUp className="text-rose-600" size={18} />}
               />
             </section>
 
             {/* Trend Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">本周趋势增长曲线</h3>
                     <p className="text-[10px] text-slate-400 mt-0.5">展示本周每日{selectedMetric === 'salesAmount' ? '销售额' : '销量'}波动情况</p>
@@ -632,7 +661,7 @@ export default function App() {
                     WEEKLY TREND
                   </div>
                 </div>
-                <div className="h-[200px] w-full">
+                <div className="h-[160px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData.weeklyTrend}>
                       <defs>
@@ -670,8 +699,8 @@ export default function App() {
                 </div>
               </div>
 
-              <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-6">
+              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+                <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">本月趋势增长曲线</h3>
                     <p className="text-[10px] text-slate-400 mt-0.5">展示本月每日{selectedMetric === 'salesAmount' ? '销售额' : '销量'}波动情况</p>
@@ -680,7 +709,7 @@ export default function App() {
                     MONTHLY TREND
                   </div>
                 </div>
-                <div className="h-[200px] w-full">
+                <div className="h-[160px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={trendData.monthlyTrend}>
                       <defs>
@@ -745,20 +774,20 @@ export default function App() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
-                      <th className="px-6 py-4 min-w-[150px]">维度 / 细分项</th>
-                      <th className="px-2 py-4 text-right">上周{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-right">本周{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-center">本周同比</th>
-                      <th className="px-2 py-4 text-center">本周利润率</th>
-                      <th className="px-2 py-4 text-right">上月{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-right">本月{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-center">本月同比</th>
-                      <th className="px-2 py-4 text-center">本月利润率</th>
-                      <th className="px-2 py-4 text-right">25{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-right">26{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
-                      <th className="px-2 py-4 text-center">今年同比</th>
-                      <th className="px-2 py-4 text-center">年度利润率</th>
-                      <th className="px-6 py-4 text-right">累计{selectedMetric === 'salesAmount' ? '销售' : '销量'}</th>
+                      <SortableHeader label="维度 / 细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
+                      <SortableHeader label={`上周${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="lastWeek" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label={`本周${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="thisWeek" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="本周同比" sortKey="wow" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="本周利润率" sortKey="weekMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label={`上月${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="lastMonth" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label={`本月${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="thisMonth" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="本月同比" sortKey="mom" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="本月利润率" sortKey="monthMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label={`25${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="lastYear" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label={`26${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="thisYear" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="今年同比" sortKey="yoy" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="年度利润率" sortKey="yearMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label={`累计${selectedMetric === 'salesAmount' ? '销售' : '销量'}`} sortKey="total" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
