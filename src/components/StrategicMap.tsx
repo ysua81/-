@@ -109,8 +109,25 @@ const AMAZON_CATEGORIES = {
 };
 
 export default function StrategicMap() {
-  const [strategicData] = useState<StrategicCategory[]>(() => generateStrategicMapData());
+  const [rawStrategicData] = useState<StrategicCategory[]>(() => generateStrategicMapData());
+  const [sortBy, setSortBy] = useState<'popularity' | 'growth'>('popularity');
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
+
+  const sortedStrategicData = React.useMemo(() => {
+    return [...rawStrategicData].map(category => {
+      const allItems = [category.topItem, ...category.items];
+      const sortedAll = allItems.sort((a, b) => 
+        sortBy === 'popularity' ? b.popularity - a.popularity : b.growth - a.growth
+      );
+      return {
+        ...category,
+        topItem: sortedAll[0],
+        items: sortedAll.slice(1)
+      };
+    }).sort((a, b) => 
+      sortBy === 'popularity' ? b.topItem.popularity - a.topItem.popularity : b.topItem.growth - a.topItem.growth
+    );
+  }, [rawStrategicData, sortBy]);
   const [platform, setPlatform] = useState('阿里巴巴');
   const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
@@ -329,16 +346,33 @@ export default function StrategicMap() {
 
       {activeTab === 'matrix' ? (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center gap-2">
-            <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
-              <div className="w-2 h-2 bg-indigo-600 rounded-full" />
+          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
+                <div className="w-2 h-2 bg-indigo-600 rounded-full" />
+              </div>
+              <h3 className="font-bold text-slate-800">词根分析</h3>
             </div>
-            <h3 className="font-bold text-slate-800">词根分析</h3>
+
+            <div className="flex items-center gap-2">
+              <span className="text-xs text-slate-500">排序方式</span>
+              <div className="relative">
+                <select 
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'popularity' | 'growth')}
+                  className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[100px]"
+                >
+                  <option value="popularity">搜索人气</option>
+                  <option value="growth">同比增长</option>
+                </select>
+                <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
           </div>
           
           <div className="overflow-x-auto">
             <div className="flex min-w-max">
-              {strategicData.map((category, idx) => (
+              {sortedStrategicData.map((category, idx) => (
                 <div 
                   key={category.title} 
                   className={cn(
