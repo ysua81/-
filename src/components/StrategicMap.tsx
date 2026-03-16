@@ -15,7 +15,10 @@ import {
   TrendingUp,
   TrendingDown,
   Database,
-  Grid
+  Grid,
+  User,
+  Clock,
+  Search
 } from 'lucide-react';
 import { StrategicCategory, KeywordData } from '../types';
 import { generateStrategicMapData, generateKeywordData } from '../mockData';
@@ -131,15 +134,40 @@ export default function StrategicMap() {
   const [platform, setPlatform] = useState('阿里巴巴');
   const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
-  const [activeTab, setActiveTab] = useState<'matrix' | 'datasource'>('matrix');
+  const [activeTab, setActiveTab] = useState<'matrix' | 'datasource' | 'library'>('matrix');
   const [filterKeyword, setFilterKeyword] = useState<string | null>(null);
   const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const [lastGeneratedTitle, setLastGeneratedTitle] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
+  const [libraryTitles, setLibraryTitles] = useState([
+    { user: '张三', time: '2025-03-15 10:30', title: '2025新款 婴儿游泳池 充气加厚 厂家直销' },
+    { user: '李四', time: '2025-03-15 14:20', title: '爆款推荐：戏水玩具 | 婴儿 | 折叠 质量保证' },
+    { user: '王五', time: '2025-03-16 09:15', title: '高端定制 充气浮排 水上运动 必备单品' },
+    { user: '张三', time: '2025-03-16 11:05', title: '折叠浴桶 婴儿 泡脚 2025新款 特惠' },
+  ]);
+  const [libraryUserFilter, setLibraryUserFilter] = useState('全部用户');
 
   const keywordData = React.useMemo(() => generateKeywordData(filterKeyword), [filterKeyword]);
+
+  const calculateSimilarity = (title: string) => {
+    if (libraryTitles.length === 0) return 0;
+    
+    // Simple word-based similarity
+    const getWords = (t: string) => t.toLowerCase().split(/[\s|:|：]+/).filter(w => w.length > 0);
+    const targetWords = getWords(title);
+    
+    let maxSim = 0;
+    libraryTitles.forEach(lib => {
+      const libWords = getWords(lib.title);
+      const intersection = targetWords.filter(w => libWords.includes(w));
+      const sim = intersection.length / Math.max(targetWords.length, 1);
+      if (sim > maxSim) maxSim = sim;
+    });
+    
+    return Math.round(maxSim * 100);
+  };
 
   const handlePlatformChange = (newPlatform: string) => {
     setPlatform(newPlatform);
@@ -167,6 +195,12 @@ export default function StrategicMap() {
 
   const removeWord = (word: string) => {
     setSelectedWords(selectedWords.filter(w => w !== word));
+  };
+
+  const deleteLibraryTitle = (index: number) => {
+    const filtered = libraryTitles.filter(item => libraryUserFilter === '全部用户' || item.user === libraryUserFilter);
+    const itemToDelete = filtered[index];
+    setLibraryTitles(prev => prev.filter(item => item !== itemToDelete));
   };
 
   const generateTitle = () => {
@@ -342,10 +376,20 @@ export default function StrategicMap() {
           <Database size={16} />
           <span>关键词数据源</span>
         </button>
+        <button 
+          onClick={() => setActiveTab('library')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all",
+            activeTab === 'library' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          <Database size={16} />
+          <span>标题库</span>
+        </button>
       </div>
 
-      {activeTab === 'matrix' ? (
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+      {activeTab === 'matrix' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
           <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
@@ -439,7 +483,9 @@ export default function StrategicMap() {
             </div>
           </div>
         </div>
-      ) : (
+      )}
+
+      {activeTab === 'datasource' && (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
           <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
             <div className="flex items-center gap-4">
@@ -530,6 +576,88 @@ export default function StrategicMap() {
         </div>
       )}
 
+      {activeTab === 'library' && (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in duration-300">
+          <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center">
+                <Database size={20} className="text-indigo-600" />
+              </div>
+              <div>
+                <h3 className="font-bold text-slate-800">标题库</h3>
+                <p className="text-xs text-slate-400">查看团队已使用的标题及历史记录</p>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <select 
+                  value={libraryUserFilter}
+                  onChange={(e) => setLibraryUserFilter(e.target.value)}
+                  className="appearance-none bg-slate-50 border border-slate-200 rounded-lg pl-8 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[140px]"
+                >
+                  <option value="全部用户">全部用户</option>
+                  {Array.from(new Set(libraryTitles.map(t => t.user))).map(user => (
+                    <option key={user} value={user}>{user}</option>
+                  ))}
+                </select>
+                <User size={14} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+              </div>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用者</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用时间</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">标题名称</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">操作</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {libraryTitles
+                  .filter(item => libraryUserFilter === '全部用户' || item.user === libraryUserFilter)
+                  .map((item, idx) => (
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-xs font-bold">
+                          {item.user[0]}
+                        </div>
+                        <span className="text-sm font-medium text-slate-700">{item.user}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2 text-slate-500">
+                        <Clock size={14} />
+                        <span className="text-sm font-mono">{item.time}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm text-slate-700">{item.title}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-3">
+                        <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">复制</button>
+                        <button 
+                          onClick={() => deleteLibraryTitle(idx)}
+                          className="text-rose-500 hover:text-rose-700 text-sm font-medium flex items-center gap-1"
+                        >
+                          <Trash2 size={14} />
+                          <span>删除</span>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
       {/* Word Combination Bar */}
       <div className="sticky bottom-8 z-50 space-y-4">
         {suggestedTitles.length > 0 && !currentTitle && (
@@ -544,24 +672,47 @@ export default function StrategicMap() {
               </button>
             </div>
             <div className="grid grid-cols-1 gap-2">
-              {suggestedTitles.map((title, idx) => (
-                <button 
-                  key={idx}
-                  onClick={() => {
-                    setCurrentTitle(title);
-                    setSuggestedTitles([]);
-                    if (!generatedTitles.includes(title)) {
-                      setGeneratedTitles([...generatedTitles, title]);
-                    }
-                  }}
-                  className="text-left p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
-                >
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600">{title}</span>
-                    <Plus size={14} className="text-slate-300 group-hover:text-indigo-400" />
-                  </div>
-                </button>
-              ))}
+              {suggestedTitles.map((title, idx) => {
+                const similarity = calculateSimilarity(title);
+                return (
+                  <button 
+                    key={idx}
+                    onClick={() => {
+                      setCurrentTitle(title);
+                      setSuggestedTitles([]);
+                      if (!generatedTitles.includes(title)) {
+                        setGeneratedTitles([...generatedTitles, title]);
+                      }
+                      // Add to library for demo purposes
+                      setLibraryTitles(prev => [{
+                        user: '当前用户',
+                        time: new Date().toISOString().replace('T', ' ').substring(0, 16),
+                        title: title
+                      }, ...prev]);
+                    }}
+                    className="text-left p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="space-y-1">
+                        <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600">{title}</span>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-24 bg-slate-100 rounded-full overflow-hidden">
+                            <div 
+                              className={cn(
+                                "h-full transition-all duration-500",
+                                similarity > 80 ? "bg-rose-500" : similarity > 50 ? "bg-amber-500" : "bg-emerald-500"
+                              )}
+                              style={{ width: `${similarity}%` }}
+                            />
+                          </div>
+                          <span className="text-[10px] font-bold text-slate-400">库相似度: {similarity}%</span>
+                        </div>
+                      </div>
+                      <Plus size={14} className="text-slate-300 group-hover:text-indigo-400" />
+                    </div>
+                  </button>
+                );
+              })}
             </div>
           </div>
         )}
