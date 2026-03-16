@@ -11,10 +11,14 @@ import {
   Trash2, 
   ChevronDown,
   Plus,
-  X
+  X,
+  TrendingUp,
+  TrendingDown,
+  Database,
+  Grid
 } from 'lucide-react';
-import { StrategicCategory } from '../types';
-import { generateStrategicMapData } from '../mockData';
+import { StrategicCategory, KeywordData } from '../types';
+import { generateStrategicMapData, generateKeywordData } from '../mockData';
 
 const cn = (...classes: (string | boolean | undefined)[]) => classes.filter(Boolean).join(' ');
 
@@ -50,10 +54,12 @@ const ALIBABA_CATEGORIES = {
 
 export default function StrategicMap() {
   const [strategicData] = useState<StrategicCategory[]>(() => generateStrategicMapData());
+  const [keywordData] = useState<KeywordData[]>(() => generateKeywordData());
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
   const [platform, setPlatform] = useState('阿里巴巴');
   const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [activeTab, setActiveTab] = useState<'matrix' | 'datasource'>('matrix');
 
   const handleWordSelect = (word: string) => {
     if (!selectedWords.includes(word)) {
@@ -181,13 +187,16 @@ export default function StrategicMap() {
               <div className="flex items-center gap-2">
                 <div className="relative">
                   <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[100px]">
-                    <option>2025年</option>
+                    <option value="2025">2025年</option>
+                    <option value="2024">2024年</option>
                   </select>
                   <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
                 <div className="relative">
                   <select className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[80px]">
-                    <option>1月</option>
+                    {Array.from({ length: 12 }, (_, i) => (
+                      <option key={i + 1} value={i + 1}>{i + 1}月</option>
+                    ))}
                   </select>
                   <ChevronDown size={14} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
                 </div>
@@ -208,59 +217,164 @@ export default function StrategicMap() {
         </div>
       </div>
 
-      {/* Strategic Matrix */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center gap-2">
-          <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
-            <div className="w-2 h-2 bg-indigo-600 rounded-full" />
-          </div>
-          <h3 className="font-bold text-slate-800">战略矩阵</h3>
-        </div>
-        
-        <div className="overflow-x-auto">
-          <div className="flex min-w-max">
-            {strategicData.map((category, idx) => (
-              <div 
-                key={category.title} 
-                className={cn(
-                  "flex-1 min-w-[200px] border-r border-slate-100 last:border-0",
-                  idx % 2 === 0 ? "bg-white" : "bg-slate-50/10"
-                )}
-              >
-                {/* Category Header */}
-                <div className="p-4 border-b border-slate-50">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-indigo-600">{category.title}</span>
-                    <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">搜索人气</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-slate-400">{category.topItem.name}</span>
-                    <span className="text-xs text-slate-300 font-mono">
-                      {category.topItem.popularity > 0 ? category.topItem.popularity.toLocaleString() : '-'}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Items List */}
-                <div className="divide-y divide-slate-50">
-                  {category.items.map((item) => (
-                    <div 
-                      key={item.name}
-                      onClick={() => handleWordSelect(item.name)}
-                      className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group"
-                    >
-                      <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{item.name}</span>
-                      <span className="text-xs text-slate-400 font-mono">
-                        {item.popularity > 0 ? item.popularity.toLocaleString() : '-'}
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+      {/* Tabs */}
+      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+        <button 
+          onClick={() => setActiveTab('matrix')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all",
+            activeTab === 'matrix' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          <Grid size={16} />
+          <span>词根分析</span>
+        </button>
+        <button 
+          onClick={() => setActiveTab('datasource')}
+          className={cn(
+            "flex items-center gap-2 px-6 py-2 rounded-lg text-sm font-bold transition-all",
+            activeTab === 'datasource' ? "bg-white text-indigo-600 shadow-sm" : "text-slate-500 hover:bg-slate-50"
+          )}
+        >
+          <Database size={16} />
+          <span>关键词数据源</span>
+        </button>
       </div>
+
+      {activeTab === 'matrix' ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center gap-2">
+            <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
+              <div className="w-2 h-2 bg-indigo-600 rounded-full" />
+            </div>
+            <h3 className="font-bold text-slate-800">词根分析</h3>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <div className="flex min-w-max">
+              {strategicData.map((category, idx) => (
+                <div 
+                  key={category.title} 
+                  className={cn(
+                    "flex-1 min-w-[220px] border-r border-slate-100 last:border-0",
+                    idx % 2 === 0 ? "bg-white" : "bg-slate-50/10"
+                  )}
+                >
+                  {/* Category Header */}
+                  <div className="p-4 border-b border-slate-50 pb-6"> {/* Increased padding-bottom for spacing */}
+                    <div className="flex items-center justify-between mb-3">
+                      <span className="text-sm font-bold text-indigo-600">{category.title}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">搜索人气 / 同比</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-slate-600 font-medium">{category.topItem.name}</span>
+                      <div className="flex flex-col items-end">
+                        <span className="text-xs text-slate-700 font-mono font-bold">
+                          {category.topItem.popularity > 0 ? category.topItem.popularity.toLocaleString() : '-'}
+                        </span>
+                        <div className={cn(
+                          "flex items-center gap-0.5 text-[10px] font-bold",
+                          category.topItem.growth > 0 ? "text-emerald-500" : "text-rose-500"
+                        )}>
+                          {category.topItem.growth > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                          {Math.abs(category.topItem.growth)}%
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Items List */}
+                  <div className="divide-y divide-slate-50">
+                    {category.items.map((item) => (
+                      <div 
+                        key={item.name}
+                        onClick={() => handleWordSelect(item.name)}
+                        className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group"
+                      >
+                        <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{item.name}</span>
+                        <div className="flex flex-col items-end">
+                          <span className="text-xs text-slate-500 font-mono">
+                            {item.popularity > 0 ? item.popularity.toLocaleString() : '-'}
+                          </span>
+                          <div className={cn(
+                            "flex items-center gap-0.5 text-[10px] font-medium",
+                            item.growth > 0 ? "text-emerald-500" : "text-rose-500"
+                          )}>
+                            {item.growth > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+                            {Math.abs(item.growth)}%
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden animate-in fade-in slide-in-from-bottom-4 duration-300">
+          <div className="p-4 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
+                <Database size={12} className="text-indigo-600" />
+              </div>
+              <h3 className="font-bold text-slate-800">关键词数据源</h3>
+            </div>
+            <span className="text-xs text-slate-400">共 {keywordData.length} 条数据</span>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-slate-50/50">
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">排名</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">关键词</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">搜索指数</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">点击率</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">支付转化率</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">支付指数</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">点击指数</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-100">
+                {keywordData.map((item) => (
+                  <tr key={item.rank} className="hover:bg-slate-50/50 transition-colors group">
+                    <td className="px-6 py-4">
+                      <span className={cn(
+                        "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
+                        item.rank <= 3 ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-100 text-slate-500"
+                      )}>
+                        {item.rank}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{item.keyword}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono text-slate-600">{item.searchIndex.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono text-slate-600">{item.clickRate.toFixed(2)}%</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono text-slate-600">{item.paymentConversion.toFixed(2)}%</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono text-slate-600">{item.paymentIndex.toLocaleString()}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-sm font-mono text-slate-600">{item.clickIndex.toLocaleString()}</span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Market Opportunity Discovery */}
       <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">

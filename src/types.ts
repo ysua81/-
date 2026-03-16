@@ -57,6 +57,17 @@ export interface GrowthMetrics {
 export interface StrategicDemandItem {
   name: string;
   popularity: number;
+  growth: number; // 同比增长
+}
+
+export interface KeywordData {
+  rank: number;
+  keyword: string;
+  searchIndex: number;
+  clickRate: number;
+  paymentConversion: number;
+  paymentIndex: number;
+  clickIndex: number;
 }
 
 export interface StrategicCategory {

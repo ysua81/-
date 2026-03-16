@@ -1,115 +1,130 @@
-import { SalesRecord, CompetitiveProduct, StrategicCategory } from './types';
+import { SalesRecord, CompetitiveProduct, StrategicCategory, KeywordData } from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
 
 export const generateStrategicMapData = (): StrategicCategory[] => {
   const categories = [
     {
       title: '人群需求',
-      topItem: { name: '婴儿', popularity: 32728092 },
+      topItem: { name: '婴儿', popularity: 32728092, growth: 60.68 },
       items: [
-        { name: '儿童', popularity: 31138385 },
-        { name: '宝宝', popularity: 29837075 },
-        { name: '成人', popularity: 5047646 },
-        { name: '大人', popularity: 4407658 },
-        { name: '新生', popularity: 4059493 },
-        { name: '一岁', popularity: 3482294 },
-        { name: '幼儿', popularity: 3196079 },
-        { name: '游泳', popularity: 3076304 },
-        { name: '女士', popularity: 1933941 },
+        { name: '儿童', popularity: 31138385, growth: 45.2 },
+        { name: '宝宝', popularity: 29837075, growth: 32.1 },
+        { name: '成人', popularity: 5047646, growth: -5.4 },
+        { name: '大人', popularity: 4407658, growth: 12.3 },
+        { name: '新生', popularity: 4059493, growth: 8.9 },
+        { name: '一岁', popularity: 3482294, growth: 15.6 },
+        { name: '幼儿', popularity: 3196079, growth: -2.1 },
+        { name: '游泳', popularity: 3076304, growth: 22.4 },
+        { name: '女士', popularity: 1933941, growth: 10.5 },
       ]
     },
     {
       title: '使用需求',
-      topItem: { name: '泡脚', popularity: 28349066 },
+      topItem: { name: '泡脚', popularity: 28349066, growth: 15.4 },
       items: [
-        { name: '游泳', popularity: 23249082 },
-        { name: '泡澡', popularity: 13164853 },
-        { name: '滑雪', popularity: 5055012 },
-        { name: '洗澡', popularity: 4949664 },
-        { name: '拳击', popularity: 4923857 },
-        { name: '洗头', popularity: 4815870 },
-        { name: '洗脚', popularity: 3788488 },
-        { name: '坐浴', popularity: 3320303 },
-        { name: '训练', popularity: 2564817 },
+        { name: '游泳', popularity: 23249082, growth: 28.9 },
+        { name: '泡澡', popularity: 13164853, growth: 12.1 },
+        { name: '滑雪', popularity: 5055012, growth: 145.2 },
+        { name: '洗澡', popularity: 4949664, growth: 5.6 },
+        { name: '拳击', popularity: 4923857, growth: 32.1 },
+        { name: '洗头', popularity: 4815870, growth: 8.9 },
+        { name: '洗脚', popularity: 3788488, growth: 10.2 },
+        { name: '坐浴', popularity: 3320303, growth: 14.5 },
+        { name: '训练', popularity: 2564817, growth: 22.1 },
       ]
     },
     {
       title: '其他需求',
-      topItem: { name: '消耗', popularity: 758666 },
+      topItem: { name: '消耗', popularity: 758666, growth: 5.4 },
       items: [
-        { name: 'kk', popularity: 661780 },
-        { name: '成长', popularity: 619851 },
-        { name: '用品', popularity: 536219 },
-        { name: '人家', popularity: 487454 },
-        { name: '以上', popularity: 367764 },
-        { name: '一名', popularity: 348520 },
-        { name: '抽抽', popularity: 346629 },
-        { name: '体力', popularity: 313432 },
-        { name: '用盆', popularity: 285912 },
+        { name: 'kk', popularity: 661780, growth: 12.3 },
+        { name: '成长', popularity: 619851, growth: 8.9 },
+        { name: '用品', popularity: 536219, growth: 15.6 },
+        { name: '人家', popularity: 487454, growth: -2.1 },
+        { name: '以上', popularity: 367764, growth: 22.4 },
+        { name: '一名', popularity: 348520, growth: 10.5 },
+        { name: '抽抽', popularity: 346629, growth: 5.6 },
+        { name: '体力', popularity: 313432, growth: 32.1 },
+        { name: '用盆', popularity: 285912, growth: 8.9 },
       ]
     },
     {
       title: '功能需求',
-      topItem: { name: '充气', popularity: 21210097 },
+      topItem: { name: '充气', popularity: 21210097, growth: 45.2 },
       items: [
-        { name: '折叠', popularity: 12666251 },
-        { name: '游泳', popularity: 10563711 },
-        { name: '气垫', popularity: 5242931 },
-        { name: '电动', popularity: 2972861 },
-        { name: '便携', popularity: 2244701 },
-        { name: '防水', popularity: 2195839 },
-        { name: '带轮', popularity: 2115053 },
-        { name: '自动', popularity: 2057557 },
-        { name: '喷水', popularity: 2011542 },
+        { name: '折叠', popularity: 12666251, growth: 32.1 },
+        { name: '游泳', popularity: 10563711, growth: -5.4 },
+        { name: '气垫', popularity: 5242931, growth: 12.3 },
+        { name: '电动', popularity: 2972861, growth: 8.9 },
+        { name: '便携', popularity: 2244701, growth: 15.6 },
+        { name: '防水', popularity: 2195839, growth: -2.1 },
+        { name: '带轮', popularity: 2115053, growth: 22.4 },
+        { name: '自动', popularity: 2057557, growth: 10.5 },
+        { name: '喷水', popularity: 2011542, growth: 5.6 },
       ]
     },
     {
       title: '品牌需求',
-      topItem: { name: 'stokke', popularity: 2504485 },
+      topItem: { name: 'stokke', popularity: 2504485, growth: 12.3 },
       items: [
-        { name: '卡达', popularity: 2478609 },
-        { name: '哈卡', popularity: 2145882 },
-        { name: 'iuu', popularity: 1657759 },
-        { name: 'kk', popularity: 1129509 },
-        { name: '卡曼', popularity: 1037422 },
-        { name: '迪卡侬', popularity: 891465 },
-        { name: '肯德基', popularity: 866610 },
-        { name: '英发', popularity: 771820 },
-        { name: '气床', popularity: 721144 },
+        { name: '卡达', popularity: 2478609, growth: 8.9 },
+        { name: '哈卡', popularity: 2145882, growth: 15.6 },
+        { name: 'iuu', popularity: 1657759, growth: -2.1 },
+        { name: 'kk', popularity: 1129509, growth: 22.4 },
+        { name: '卡曼', popularity: 1037422, growth: 10.5 },
+        { name: '迪卡侬', popularity: 891465, growth: 5.6 },
+        { name: '肯德基', popularity: 866610, growth: 32.1 },
+        { name: '英发', popularity: 771820, growth: 8.9 },
+        { name: '气床', popularity: 721144, growth: 10.2 },
       ]
     },
     {
       title: '品类需求',
-      topItem: { name: '玩具', popularity: 35459759 },
+      topItem: { name: '玩具', popularity: 35459759, growth: 15.6 },
       items: [
-        { name: '脚桶', popularity: 25112762 },
-        { name: '泡脚桶', popularity: 21776434 },
-        { name: '水枪', popularity: 19000478 },
-        { name: '餐椅', popularity: 16985697 },
-        { name: '泳镜', popularity: 15086882 },
-        { name: '泳圈', popularity: 11002087 },
-        { name: '充气床', popularity: 8208079 },
-        { name: '泳帽', popularity: 7800672 },
-        { name: '洗澡盆', popularity: 6903629 },
+        { name: '脚桶', popularity: 25112762, growth: -2.1 },
+        { name: '泡脚桶', popularity: 21776434, growth: 22.4 },
+        { name: '水枪', popularity: 19000478, growth: 10.5 },
+        { name: '餐椅', popularity: 16985697, growth: 5.6 },
+        { name: '泳镜', popularity: 15086882, growth: 32.1 },
+        { name: '泳圈', popularity: 11002087, growth: 8.9 },
+        { name: '充气床', popularity: 8208079, growth: 10.2 },
+        { name: '泳帽', popularity: 7800672, growth: 14.5 },
+        { name: '洗澡盆', popularity: 6903629, growth: 22.1 },
       ]
     },
     {
       title: '场景需求',
-      topItem: { name: '家用', popularity: 0 }, // Image doesn't show popularity for top scene
+      topItem: { name: '家用', popularity: 12500, growth: 5.6 },
       items: [
-        { name: '户外', popularity: 0 },
-        { name: '飞机', popularity: 0 },
-        { name: '露营', popularity: 0 },
-        { name: '地铺', popularity: 0 },
-        { name: '水上', popularity: 0 },
-        { name: '旅行', popularity: 0 },
-        { name: '火车', popularity: 0 },
-        { name: '高铁', popularity: 0 },
-        { name: '室内', popularity: 0 },
+        { name: '户外', popularity: 8900, growth: 32.1 },
+        { name: '飞机', popularity: 4500, growth: 8.9 },
+        { name: '露营', popularity: 3200, growth: 10.2 },
+        { name: '地铺', popularity: 2100, growth: 14.5 },
+        { name: '水上', popularity: 1800, growth: 22.1 },
+        { name: '旅行', popularity: 1500, growth: 12.3 },
+        { name: '火车', popularity: 1200, growth: 8.9 },
+        { name: '高铁', popularity: 900, growth: 15.6 },
+        { name: '室内', popularity: 800, growth: -2.1 },
       ]
     }
   ];
   return categories as StrategicCategory[];
+};
+
+export const generateKeywordData = (): KeywordData[] => {
+  return [
+    { rank: 1, keyword: '宝宝餐椅', searchIndex: 124200, clickRate: 99.70, paymentConversion: 11.05, paymentIndex: 13700, clickIndex: 123800 },
+    { rank: 2, keyword: '儿童餐椅', searchIndex: 69600, clickRate: 95.05, paymentConversion: 8.66, paymentIndex: 5732, clickIndex: 66200 },
+    { rank: 3, keyword: '成长椅', searchIndex: 66600, clickRate: 110.93, paymentConversion: 4.35, paymentIndex: 3213, clickIndex: 73900 },
+    { rank: 4, keyword: '哈卡达餐椅', searchIndex: 60300, clickRate: 93.99, paymentConversion: 2.00, paymentIndex: 1135, clickIndex: 56700 },
+    { rank: 5, keyword: '实木餐椅', searchIndex: 55400, clickRate: 88.50, paymentConversion: 5.20, paymentIndex: 2800, clickIndex: 49000 },
+    { rank: 6, keyword: '折叠餐椅', searchIndex: 48200, clickRate: 92.10, paymentConversion: 7.40, paymentIndex: 3500, clickIndex: 44000 },
+    { rank: 7, keyword: '多功能餐椅', searchIndex: 42100, clickRate: 85.30, paymentConversion: 3.80, paymentIndex: 1600, clickIndex: 36000 },
+    { rank: 8, keyword: '便携餐椅', searchIndex: 35600, clickRate: 78.90, paymentConversion: 6.10, paymentIndex: 2100, clickIndex: 28000 },
+    { rank: 9, keyword: '婴儿餐椅', searchIndex: 31200, clickRate: 82.40, paymentConversion: 4.50, paymentIndex: 1400, clickIndex: 25000 },
+    { rank: 10, keyword: '餐椅垫', searchIndex: 28400, clickRate: 75.20, paymentConversion: 2.80, paymentIndex: 800, clickIndex: 21000 },
+  ];
 };
 
 const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
