@@ -355,8 +355,9 @@ export default function StrategicMap() {
                       </div>
                     </div>
                     <div 
-                      onClick={() => handleRootWordSelect(category.topItem.name)}
-                      className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group"
+                      onClick={() => handleKeywordSelect(category.topItem.name)}
+                      onDoubleClick={() => handleRootWordSelect(category.topItem.name)}
+                      className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
                     >
                       <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{category.topItem.name}</span>
                       <div className="flex flex-col items-end">
@@ -379,8 +380,9 @@ export default function StrategicMap() {
                     {category.items.map((item) => (
                       <div 
                         key={item.name}
-                        onClick={() => handleRootWordSelect(item.name)}
-                        className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group"
+                        onClick={() => handleKeywordSelect(item.name)}
+                        onDoubleClick={() => handleRootWordSelect(item.name)}
+                        className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
                       >
                         <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{item.name}</span>
                         <div className="flex flex-col items-end">
