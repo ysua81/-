@@ -112,19 +112,34 @@ export const generateStrategicMapData = (): StrategicCategory[] => {
   return categories as StrategicCategory[];
 };
 
-export const generateKeywordData = (): KeywordData[] => {
-  return [
-    { rank: 1, keyword: '宝宝餐椅', searchIndex: 124200, clickRate: 99.70, paymentConversion: 11.05, paymentIndex: 13700, clickIndex: 123800 },
-    { rank: 2, keyword: '儿童餐椅', searchIndex: 69600, clickRate: 95.05, paymentConversion: 8.66, paymentIndex: 5732, clickIndex: 66200 },
-    { rank: 3, keyword: '成长椅', searchIndex: 66600, clickRate: 110.93, paymentConversion: 4.35, paymentIndex: 3213, clickIndex: 73900 },
-    { rank: 4, keyword: '哈卡达餐椅', searchIndex: 60300, clickRate: 93.99, paymentConversion: 2.00, paymentIndex: 1135, clickIndex: 56700 },
-    { rank: 5, keyword: '实木餐椅', searchIndex: 55400, clickRate: 88.50, paymentConversion: 5.20, paymentIndex: 2800, clickIndex: 49000 },
-    { rank: 6, keyword: '折叠餐椅', searchIndex: 48200, clickRate: 92.10, paymentConversion: 7.40, paymentIndex: 3500, clickIndex: 44000 },
-    { rank: 7, keyword: '多功能餐椅', searchIndex: 42100, clickRate: 85.30, paymentConversion: 3.80, paymentIndex: 1600, clickIndex: 36000 },
-    { rank: 8, keyword: '便携餐椅', searchIndex: 35600, clickRate: 78.90, paymentConversion: 6.10, paymentIndex: 2100, clickIndex: 28000 },
-    { rank: 9, keyword: '婴儿餐椅', searchIndex: 31200, clickRate: 82.40, paymentConversion: 4.50, paymentIndex: 1400, clickIndex: 25000 },
-    { rank: 10, keyword: '餐椅垫', searchIndex: 28400, clickRate: 75.20, paymentConversion: 2.80, paymentIndex: 800, clickIndex: 21000 },
+export const generateKeywordData = (rootWord?: string | null): KeywordData[] => {
+  const baseKeywords = [
+    { keyword: '餐椅', searchIndex: 124200, clickRate: 99.70, paymentConversion: 11.05, paymentIndex: 13700, clickIndex: 123800 },
+    { keyword: '游泳池', searchIndex: 85000, clickRate: 88.50, paymentConversion: 5.20, paymentIndex: 4500, clickIndex: 75000 },
+    { keyword: '折叠盆', searchIndex: 45000, clickRate: 75.20, paymentConversion: 6.10, paymentIndex: 2800, clickIndex: 34000 },
+    { keyword: '充气床', searchIndex: 62000, clickRate: 82.40, paymentConversion: 4.50, paymentIndex: 3100, clickIndex: 51000 },
+    { keyword: '婴儿浴盆', searchIndex: 38000, clickRate: 92.10, paymentConversion: 7.40, paymentIndex: 2900, clickIndex: 35000 },
+    { keyword: '滑雪圈', searchIndex: 25000, clickRate: 65.30, paymentConversion: 3.80, paymentIndex: 1200, clickIndex: 16000 },
   ];
+
+  const results: KeywordData[] = [];
+  const count = 15;
+  const word = rootWord || '推荐';
+
+  for (let i = 1; i <= count; i++) {
+    const base = baseKeywords[i % baseKeywords.length];
+    results.push({
+      rank: i,
+      keyword: `${word}${base.keyword}${i}`,
+      searchIndex: Math.floor(base.searchIndex * (0.8 + Math.random() * 0.4)),
+      clickRate: base.clickRate * (0.9 + Math.random() * 0.2),
+      paymentConversion: base.paymentConversion * (0.9 + Math.random() * 0.2),
+      paymentIndex: Math.floor(base.paymentIndex * (0.8 + Math.random() * 0.4)),
+      clickIndex: Math.floor(base.clickIndex * (0.8 + Math.random() * 0.4)),
+    });
+  }
+
+  return results;
 };
 
 const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
