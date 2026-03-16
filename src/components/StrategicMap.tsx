@@ -137,6 +137,7 @@ export default function StrategicMap() {
   const [showDuplicateAlert, setShowDuplicateAlert] = useState(false);
   const [lastGeneratedTitle, setLastGeneratedTitle] = useState('');
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
+  const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
 
   const keywordData = React.useMemo(() => generateKeywordData(filterKeyword), [filterKeyword]);
 
@@ -171,16 +172,15 @@ export default function StrategicMap() {
   const generateTitle = () => {
     if (selectedWords.length === 0) return;
     
-    // Simple title generation logic: join words with some spacers
-    const title = selectedWords.join(' ') + ' 2025新款 厂家直销';
+    // Generate 3 different titles based on selected words
+    const titles = [
+      `${selectedWords.join(' ')} 2025新款 厂家直销`,
+      `爆款推荐：${selectedWords.join(' | ')} 质量保证`,
+      `${[...selectedWords].reverse().join(' ')} 高端定制 限时特惠`
+    ];
     
-    if (generatedTitles.includes(title)) {
-      setLastGeneratedTitle(title);
-      setShowDuplicateAlert(true);
-    } else {
-      setGeneratedTitles([...generatedTitles, title]);
-      setCurrentTitle(title);
-    }
+    setSuggestedTitles(titles);
+    setCurrentTitle(null);
   };
 
   return (
@@ -530,37 +530,42 @@ export default function StrategicMap() {
         </div>
       )}
 
-      {/* Market Opportunity Discovery */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-amber-50 rounded-xl flex items-center justify-center">
-              <Lightbulb size={20} className="text-amber-500" />
-            </div>
-            <div>
-              <h3 className="font-bold text-slate-900 text-lg">市场机会挖掘</h3>
-              <p className="text-sm text-slate-500">通过交叉分析人群、使用及其他需求，发现未被满足的市场空白点</p>
-            </div>
-          </div>
-          <button className="px-6 py-2.5 bg-indigo-600 text-white rounded-xl font-bold flex items-center gap-2 hover:bg-indigo-700 transition-all shadow-lg shadow-indigo-100">
-            <Zap size={18} fill="currentColor" />
-            <span>AI 挖掘新机会</span>
-          </button>
-        </div>
-
-        <div className="h-[400px] flex flex-col items-center justify-center text-center space-y-4 bg-slate-50/30 border-t border-slate-50">
-          <div className="w-20 h-20 bg-white rounded-full shadow-sm border border-slate-100 flex items-center justify-center">
-            <Sparkles size={32} className="text-slate-200" />
-          </div>
-          <div className="space-y-1">
-            <h4 className="text-lg font-bold text-slate-800">准备好发现新机会了吗？</h4>
-            <p className="text-sm text-slate-400">点击右上角按钮，让 AI 为您分析市场空白点</p>
-          </div>
-        </div>
-      </div>
-
       {/* Word Combination Bar */}
       <div className="sticky bottom-8 z-50 space-y-4">
+        {suggestedTitles.length > 0 && !currentTitle && (
+          <div className="bg-white border border-indigo-100 p-4 rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300 space-y-3 max-w-2xl mx-auto">
+            <div className="flex items-center justify-between border-b border-slate-50 pb-2">
+              <div className="flex items-center gap-2 text-indigo-600">
+                <Sparkles size={18} />
+                <span className="text-sm font-bold">请选择一个生成的标题</span>
+              </div>
+              <button onClick={() => setSuggestedTitles([])} className="text-slate-400 hover:text-slate-600">
+                <X size={16} />
+              </button>
+            </div>
+            <div className="grid grid-cols-1 gap-2">
+              {suggestedTitles.map((title, idx) => (
+                <button 
+                  key={idx}
+                  onClick={() => {
+                    setCurrentTitle(title);
+                    setSuggestedTitles([]);
+                    if (!generatedTitles.includes(title)) {
+                      setGeneratedTitles([...generatedTitles, title]);
+                    }
+                  }}
+                  className="text-left p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
+                >
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-slate-700 group-hover:text-indigo-600">{title}</span>
+                    <Plus size={14} className="text-slate-300 group-hover:text-indigo-400" />
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {currentTitle && (
           <div className="bg-indigo-600 text-white p-4 rounded-2xl shadow-xl animate-in slide-in-from-bottom-4 duration-300 flex items-center justify-between">
             <div className="flex items-center gap-3">
