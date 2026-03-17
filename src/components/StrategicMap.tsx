@@ -112,9 +112,24 @@ const AMAZON_CATEGORIES = {
 };
 
 export default function StrategicMap() {
-  const [rawStrategicData] = useState<StrategicCategory[]>(() => generateStrategicMapData());
+  const [platform, setPlatform] = useState('阿里巴巴');
+  const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
+  const rawStrategicData = React.useMemo(() => generateStrategicMapData(categoryPath[categoryPath.length - 1]), [categoryPath]);
   const [sortBy, setSortBy] = useState<'popularity' | 'growth'>('popularity');
   const [selectedWords, setSelectedWords] = useState<string[]>([]);
+  const [deleteConfirmIndex, setDeleteConfirmIndex] = useState<number | null>(null);
+
+  const inferAudienceAndScenario = (title: string) => {
+    const audience = title.includes('婴儿') || title.includes('宝宝') ? '宝妈/婴幼儿' : 
+                    title.includes('成人') ? '成年人' : 
+                    title.includes('女士') ? '女性用户' : '大众人群';
+    
+    const scenario = title.includes('游泳') ? '水上活动/健身' : 
+                    title.includes('泡脚') || title.includes('浴桶') ? '居家保健/放松' : 
+                    title.includes('滑雪') ? '户外运动/冬季' : '日常使用';
+    
+    return { audience, scenario };
+  };
 
   const sortedStrategicData = React.useMemo(() => {
     return [...rawStrategicData].map(category => {
@@ -131,8 +146,6 @@ export default function StrategicMap() {
       sortBy === 'popularity' ? b.topItem.popularity - a.topItem.popularity : b.topItem.growth - a.topItem.growth
     );
   }, [rawStrategicData, sortBy]);
-  const [platform, setPlatform] = useState('阿里巴巴');
-  const [categoryPath, setCategoryPath] = useState(['玩具', '运动、休闲、传统玩具', '戏水玩具']);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'matrix' | 'datasource' | 'library'>('matrix');
   const [filterKeyword, setFilterKeyword] = useState<string | null>(null);
@@ -142,10 +155,10 @@ export default function StrategicMap() {
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [suggestedTitles, setSuggestedTitles] = useState<string[]>([]);
   const [libraryTitles, setLibraryTitles] = useState([
-    { user: '张三', time: '2025-03-15 10:30', title: '2025新款 婴儿游泳池 充气加厚 厂家直销' },
-    { user: '李四', time: '2025-03-15 14:20', title: '爆款推荐：戏水玩具 | 婴儿 | 折叠 质量保证' },
-    { user: '王五', time: '2025-03-16 09:15', title: '高端定制 充气浮排 水上运动 必备单品' },
-    { user: '张三', time: '2025-03-16 11:05', title: '折叠浴桶 婴儿 泡脚 2025新款 特惠' },
+    { user: '张三', time: '2025-03-15 10:30', title: '2025新款 婴儿游泳池 充气加厚 厂家直销', ...inferAudienceAndScenario('2025新款 婴儿游泳池 充气加厚 厂家直销') },
+    { user: '李四', time: '2025-03-15 14:20', title: '爆款推荐：戏水玩具 | 婴儿 | 折叠 质量保证', ...inferAudienceAndScenario('爆款推荐：戏水玩具 | 婴儿 | 折叠 质量保证') },
+    { user: '王五', time: '2025-03-16 09:15', title: '高端定制 充气浮排 水上运动 必备单品', ...inferAudienceAndScenario('高端定制 充气浮排 水上运动 必备单品') },
+    { user: '张三', time: '2025-03-16 11:05', title: '折叠浴桶 婴儿 泡脚 2025新款 特惠', ...inferAudienceAndScenario('折叠浴桶 婴儿 泡脚 2025新款 特惠') },
   ]);
   const [libraryUserFilter, setLibraryUserFilter] = useState('全部用户');
 
@@ -201,16 +214,37 @@ export default function StrategicMap() {
     const filtered = libraryTitles.filter(item => libraryUserFilter === '全部用户' || item.user === libraryUserFilter);
     const itemToDelete = filtered[index];
     setLibraryTitles(prev => prev.filter(item => item !== itemToDelete));
+    setDeleteConfirmIndex(null);
   };
 
   const generateTitle = () => {
     if (selectedWords.length === 0) return;
     
-    // Generate 3 different titles based on selected words
+    const suffixes = [
+      "2025新款 厂家直销",
+      "质量保证 爆款推荐",
+      "高端定制 限时特惠",
+      "官方正品 售后无忧",
+      "源头工厂 价格优选",
+      "极速发货 品质保障"
+    ];
+
+    const prefixes = [
+      "【新品】",
+      "爆款：",
+      "热销：",
+      "限时抢购：",
+      "新品上市：",
+      ""
+    ];
+
+    const shuffle = (array: string[]) => [...array].sort(() => Math.random() - 0.5);
+    
+    // Generate 3 different titles based on selected words with some randomness
     const titles = [
-      `${selectedWords.join(' ')} 2025新款 厂家直销`,
-      `爆款推荐：${selectedWords.join(' | ')} 质量保证`,
-      `${[...selectedWords].reverse().join(' ')} 高端定制 限时特惠`
+      `${prefixes[Math.floor(Math.random() * prefixes.length)]}${selectedWords.join(' ')} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`,
+      `爆款推荐：${shuffle(selectedWords).join(' | ')} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`,
+      `${shuffle(selectedWords).join(' ')} ${suffixes[Math.floor(Math.random() * suffixes.length)]}`
     ];
     
     setSuggestedTitles(titles);
@@ -444,7 +478,7 @@ export default function StrategicMap() {
                         </span>
                         <div className={cn(
                           "flex items-center gap-0.5 text-[10px] font-medium",
-                          category.topItem.growth > 0 ? "text-emerald-500" : "text-rose-500"
+                          category.topItem.growth > 0 ? "text-rose-500" : "text-emerald-500"
                         )}>
                           {category.topItem.growth > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                           {Math.abs(category.topItem.growth)}%
@@ -469,7 +503,7 @@ export default function StrategicMap() {
                           </span>
                           <div className={cn(
                             "flex items-center gap-0.5 text-[10px] font-medium",
-                            item.growth > 0 ? "text-emerald-500" : "text-rose-500"
+                            item.growth > 0 ? "text-rose-500" : "text-emerald-500"
                           )}>
                             {item.growth > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
                             {Math.abs(item.growth)}%
@@ -613,6 +647,8 @@ export default function StrategicMap() {
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用者</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用时间</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">标题名称</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">人群</th>
+                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">场景</th>
                   <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">操作</th>
                 </tr>
               </thead>
@@ -620,7 +656,7 @@ export default function StrategicMap() {
                 {libraryTitles
                   .filter(item => libraryUserFilter === '全部用户' || item.user === libraryUserFilter)
                   .map((item, idx) => (
-                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors">
+                  <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-xs font-bold">
@@ -636,13 +672,29 @@ export default function StrategicMap() {
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-sm text-slate-700">{item.title}</span>
+                      <div 
+                        onClick={() => {
+                          navigator.clipboard.writeText(item.title);
+                          // Optional: Show a toast or feedback
+                        }}
+                        className="text-sm text-slate-700 cursor-pointer hover:text-indigo-600 hover:underline decoration-indigo-300 underline-offset-4 transition-colors relative group/title"
+                      >
+                        {item.title}
+                        <div className="absolute -top-8 left-0 bg-slate-800 text-white text-[10px] px-2 py-1 rounded opacity-0 group-hover/title:opacity-100 transition-opacity pointer-events-none whitespace-nowrap">
+                          点击复制标题
+                        </div>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{(item as any).audience}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{(item as any).scenario}</span>
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
-                        <button className="text-indigo-600 hover:text-indigo-800 text-sm font-medium">复制</button>
                         <button 
-                          onClick={() => deleteLibraryTitle(idx)}
+                          onClick={() => setDeleteConfirmIndex(idx)}
                           className="text-rose-500 hover:text-rose-700 text-sm font-medium flex items-center gap-1"
                         >
                           <Trash2 size={14} />
@@ -655,6 +707,37 @@ export default function StrategicMap() {
               </tbody>
             </table>
           </div>
+
+          {/* Delete Confirmation Modal */}
+          {deleteConfirmIndex !== null && (
+            <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-slate-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+              <div className="bg-white rounded-2xl p-6 max-w-sm w-full shadow-2xl animate-in zoom-in-95 duration-200">
+                <div className="flex items-center gap-3 text-rose-600 mb-4">
+                  <div className="w-10 h-10 bg-rose-50 rounded-full flex items-center justify-center">
+                    <Trash2 size={20} />
+                  </div>
+                  <h4 className="text-lg font-bold">确认删除?</h4>
+                </div>
+                <p className="text-slate-600 text-sm mb-6">
+                  您确定要从标题库中删除此标题吗？此操作无法撤销。
+                </p>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => setDeleteConfirmIndex(null)}
+                    className="flex-1 px-4 py-2 bg-slate-100 text-slate-600 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
+                  >
+                    取消
+                  </button>
+                  <button 
+                    onClick={() => deleteLibraryTitle(deleteConfirmIndex)}
+                    className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-200"
+                  >
+                    确认删除
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
@@ -667,9 +750,18 @@ export default function StrategicMap() {
                 <Sparkles size={18} />
                 <span className="text-sm font-bold">请选择一个生成的标题</span>
               </div>
-              <button onClick={() => setSuggestedTitles([])} className="text-slate-400 hover:text-slate-600">
-                <X size={16} />
-              </button>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={generateTitle}
+                  className="flex items-center gap-1 text-xs font-bold text-indigo-600 hover:text-indigo-700 bg-indigo-50 px-2 py-1 rounded-md transition-colors"
+                >
+                  <Zap size={14} />
+                  <span>重新生成</span>
+                </button>
+                <button onClick={() => setSuggestedTitles([])} className="text-slate-400 hover:text-slate-600">
+                  <X size={16} />
+                </button>
+              </div>
             </div>
             <div className="grid grid-cols-1 gap-2">
               {suggestedTitles.map((title, idx) => {
@@ -678,17 +770,15 @@ export default function StrategicMap() {
                   <button 
                     key={idx}
                     onClick={() => {
-                      setCurrentTitle(title);
                       setSuggestedTitles([]);
-                      if (!generatedTitles.includes(title)) {
-                        setGeneratedTitles([...generatedTitles, title]);
-                      }
-                      // Add to library for demo purposes
-                      setLibraryTitles(prev => [{
+                      setActiveTab('library');
+                      const newTitle = {
                         user: '当前用户',
-                        time: new Date().toISOString().replace('T', ' ').substring(0, 16),
-                        title: title
-                      }, ...prev]);
+                        time: new Date().toLocaleString('zh-CN', { hour12: false }).replace(/\//g, '-'),
+                        title: title,
+                        ...inferAudienceAndScenario(title)
+                      };
+                      setLibraryTitles(prev => [newTitle, ...prev]);
                     }}
                     className="text-left p-3 rounded-xl border border-slate-100 hover:border-indigo-200 hover:bg-indigo-50/30 transition-all group"
                   >

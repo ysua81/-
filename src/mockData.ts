@@ -1,7 +1,7 @@
 import { SalesRecord, CompetitiveProduct, StrategicCategory, KeywordData } from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
 
-export const generateStrategicMapData = (): StrategicCategory[] => {
+export const generateStrategicMapData = (category?: string): StrategicCategory[] => {
   const categories = [
     {
       title: '人群需求',
@@ -109,6 +109,25 @@ export const generateStrategicMapData = (): StrategicCategory[] => {
       ]
     }
   ];
+
+  if (category) {
+    // Randomize values based on category name to simulate dynamic data
+    const seed = category.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return categories.map(cat => ({
+      ...cat,
+      topItem: {
+        ...cat.topItem,
+        popularity: Math.floor(cat.topItem.popularity * (0.5 + (seed % 100) / 100)),
+        growth: Math.round((cat.topItem.growth + (seed % 20) - 10) * 100) / 100
+      },
+      items: cat.items.map(item => ({
+        ...item,
+        popularity: Math.floor(item.popularity * (0.5 + (seed % 100) / 100)),
+        growth: Math.round((item.growth + (seed % 20) - 10) * 100) / 100
+      }))
+    }));
+  }
+
   return categories as StrategicCategory[];
 };
 
@@ -145,13 +164,44 @@ export const generateKeywordData = (rootWord?: string | null): KeywordData[] => 
 const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
 const businessOwners = ['方建浩', '孔帅'];
 const salespeople = ['小王', '小李', '小张', '小赵', '小钱'];
-const categories = [
-  { l2: '服装', l3: '女装', l4: '连衣裙' },
-  { l2: '服装', l3: '女装', l4: 'T恤' },
-  { l2: '服装', l3: '男装', l4: '牛仔裤' },
-  { l2: '电子', l3: '手机', l4: '智能手机' },
-  { l2: '电子', l3: '电脑', l4: '笔记本' },
-  { l2: '家居', l3: '家具', l4: '沙发' },
+
+const storeAttributions = [
+  '7.阿里-义乌市益瑞康科技有限公司',
+  '9.阿里-义乌市青色贸易有限公司',
+  '66.阿里-义乌市起乾商贸有限公司',
+  '67.阿里-义乌市嘉述贸易有限公司',
+  '68.阿里-义乌市领阅贸易有限公司',
+  '阿里-义乌市数途贸易有限公司',
+  '阿里-义乌麦创科技有限公司',
+  '阿里-义乌氪创科技有限公司'
+];
+
+const wholesaleTypes: ('代发' | '批发' | '散户')[] = ['代发', '批发', '散户'];
+
+const categoryTree = [
+  { l1: '办公', l2: '医疗坐垫', l3: '配件', l4: '医疗坐垫配件' },
+  { l1: '产品配件', l2: '配件', l3: '配件', l4: '通用配件' },
+  { l1: '户外', l2: 'U型枕', l3: '25腰靠', l4: '橙柚泡泡' },
+  { l1: '户外', l2: 'U型枕', l3: '25腰靠', l4: '多巴胺粉' },
+  { l1: '户外', l2: 'U型枕', l3: '25腰靠', l4: '气泡葡萄' },
+  { l1: '户外', l2: '充气沙发', l3: '单人沙发', l4: '简约白' },
+  { l1: '户外', l2: '充气沙发', l3: '单人沙发', l4: '深邃蓝' },
+  { l1: '户外', l2: '充气沙发', l3: '双人沙发', l4: '情侣款' },
+  { l1: '户外', l2: '充气床垫', l3: '单人床垫', l4: '标准型' },
+  { l1: '户外', l2: '充气床垫', l3: '双人床垫', l4: '加厚型' },
+  { l1: '家居', l2: '板材浴缸', l3: '2025-板材浴缸', l4: '白云浮梦' },
+  { l1: '家居', l2: '板材浴缸', l3: '2025-板材浴缸', l4: '奶芙泡泡' },
+  { l1: '家居', l2: '支架泳池', l3: '大型支架', l4: '家庭装' },
+  { l1: '家居', l2: '支架泳池', l3: '小型支架', l4: '儿童款' },
+  { l1: '圈类', l2: '24寸圈', l3: '24寸圈', l4: '恐龙乐园' },
+  { l1: '圈类', l2: '24寸圈', l3: '24寸圈', l4: '独角兽' },
+  { l1: '圈类', l2: '25寸圈', l3: '25寸圈', l4: '彩虹圈' },
+  { l1: '玩具', l2: '不倒翁', l3: '25充气不倒翁', l4: '萌萌小兔' },
+  { l1: '玩具', l2: '不倒翁', l3: '25充气不倒翁', l4: '酷酷小熊' },
+  { l1: '玩具', l2: '滑雪圈', l3: '加厚滑雪圈', l4: '极速版' },
+  { l1: '浴盆', l2: '婴儿浴盆', l3: '折叠浴盆', l4: '粉色' },
+  { l1: '浴盆', l2: '婴儿浴盆', l3: '折叠浴盆', l4: '蓝色' },
+  { l1: '浴盆', l2: '婴儿浴盆', l3: '感温浴盆', l4: '智能款' },
 ];
 
 export const generateCompetitiveData = (count: number = 50): CompetitiveProduct[] => {
@@ -210,7 +260,7 @@ export const generateCompetitiveData = (count: number = 50): CompetitiveProduct[
       addToCartCount,
       platformType: platformTypes[Math.floor(Math.random() * platformTypes.length)],
       origin: origins[Math.floor(Math.random() * origins.length)],
-      category: categories[Math.floor(Math.random() * categories.length)].l3,
+      category: categoryTree[Math.floor(Math.random() * categoryTree.length)].l3,
       isGoldCrown: Math.random() > 0.8,
       isPotential: Math.random() > 0.7,
     });
@@ -224,17 +274,18 @@ export const generateMockData = (count: number = 500): SalesRecord[] => {
 
   for (let i = 0; i < count; i++) {
     const date = subDays(now, Math.floor(Math.random() * 400)); // Last 400 days
-    const cat = categories[Math.floor(Math.random() * categories.length)];
+    const cat = categoryTree[Math.floor(Math.random() * categoryTree.length)];
     const amount = Math.floor(Math.random() * 1000) + 100;
     
     data.push({
       id: `rec_${i}`,
       distributorId: `DIST_${Math.floor(Math.random() * 10) + 100}`,
-      storeName: `店铺_${Math.floor(Math.random() * 5) + 1}`,
+      storeName: storeAttributions[Math.floor(Math.random() * storeAttributions.length)],
       platform: platforms[Math.floor(Math.random() * platforms.length)],
-      isWholesale: Math.random() > 0.7,
+      isWholesale: wholesaleTypes[Math.floor(Math.random() * wholesaleTypes.length)],
       date: date.toISOString(),
       customerType: Math.random() > 0.6 ? 'Returning' : 'New',
+      categoryL1: cat.l1,
       categoryL2: cat.l2,
       categoryL3: cat.l3,
       categoryL4: cat.l4,

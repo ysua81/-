@@ -64,6 +64,63 @@ const SortableHeader = ({
   );
 };
 
+const CATEGORY_DATA: any = {
+  '办公': {
+    '医疗坐垫': {
+      '配件': ['医疗坐垫配件']
+    }
+  },
+  '产品配件': {
+    '配件': {
+      '配件': ['通用配件']
+    }
+  },
+  '户外': {
+    'U型枕': {
+      '25腰靠': ['橙柚泡泡', '多巴胺粉', '气泡葡萄']
+    },
+    '充气沙发': {
+      '单人沙发': ['简约白', '深邃蓝'],
+      '双人沙发': ['情侣款']
+    },
+    '充气床垫': {
+      '单人床垫': ['标准型'],
+      '双人床垫': ['加厚型']
+    }
+  },
+  '家居': {
+    '板材浴缸': {
+      '2025-板材浴缸': ['白云浮梦', '奶芙泡泡']
+    },
+    '支架泳池': {
+      '大型支架': ['家庭装'],
+      '小型支架': ['儿童款']
+    }
+  },
+  '圈类': {
+    '24寸圈': {
+      '24寸圈': ['恐龙乐园', '独角兽']
+    },
+    '25寸圈': {
+      '25寸圈': ['彩虹圈']
+    }
+  },
+  '玩具': {
+    '不倒翁': {
+      '25充气不倒翁': ['萌萌小兔', '酷酷小熊']
+    },
+    '滑雪圈': {
+      '加厚滑雪圈': ['极速版']
+    }
+  },
+  '浴盆': {
+    '婴儿浴盆': {
+      '折叠浴盆': ['粉色', '蓝色'],
+      '感温浴盆': ['智能款']
+    }
+  }
+};
+
 export default function App() {
   const [activeMenu, setActiveMenu] = useState('销售数据分析');
   const [data] = useState<SalesRecord[]>(() => generateMockData(1000));
@@ -74,6 +131,9 @@ export default function App() {
   const [originFilter, setOriginFilter] = useState<string | 'all'>('all');
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
   const [tableSortConfig, setTableSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
+  const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const [categoryFilterPath, setCategoryFilterPath] = useState<string[]>([]);
+  const [categorySearchQuery, setCategorySearchQuery] = useState('');
 
   const provinces = [
     '全部', '北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', 
@@ -108,13 +168,11 @@ export default function App() {
 
   const dimensions = [
     { id: 'distributorId', label: '分销商' },
-    { id: 'storeName', label: '店铺' },
+    { id: 'storeName', label: '店铺归属' },
     { id: 'platform', label: '平台' },
     { id: 'customerType', label: '新老客' },
     { id: 'isWholesale', label: '代批' },
-    { id: 'categoryL2', label: '二级类目' },
-    { id: 'categoryL3', label: '三级类目' },
-    { id: 'categoryL4', label: '四级类目' },
+    { id: 'category', label: '类目' },
     { id: 'businessOwner', label: '业务负责人' },
     { id: 'salesperson', label: '销售员' },
   ];
@@ -139,8 +197,7 @@ export default function App() {
     
     return result.filter(d => {
       if (selectedDimensionId === 'isWholesale') {
-        const val = d.isWholesale ? '代批' : '非代批';
-        return val === selectedFilterValue;
+        return d.isWholesale === selectedFilterValue;
       }
       if (selectedDimensionId === 'customerType') {
         const val = d.customerType === 'New' ? '新客' : '老客';
@@ -152,7 +209,15 @@ export default function App() {
       if (selectedDimensionId === 'salesperson') {
         return d.salesperson === selectedFilterValue;
       }
-      if (['distributorId', 'categoryL2', 'categoryL3', 'categoryL4'].includes(selectedDimensionId)) {
+      if (selectedDimensionId === 'category') {
+        const path = selectedFilterValue.split(' > ');
+        if (path.length === 1) return d.categoryL1 === path[0];
+        if (path.length === 2) return d.categoryL1 === path[0] && d.categoryL2 === path[1];
+        if (path.length === 3) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2];
+        if (path.length === 4) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2] && d.categoryL4 === path[3];
+        return true;
+      }
+      if (['distributorId'].includes(selectedDimensionId)) {
         return String((d as any)[selectedDimensionId]).toLowerCase().includes(selectedFilterValue.toLowerCase());
       }
       return String((d as any)[selectedDimensionId]) === selectedFilterValue;
@@ -233,10 +298,11 @@ export default function App() {
   const availableValues = useMemo(() => {
     if (!selectedDimensionId) return [];
     const vals = data.map(d => {
-      if (selectedDimensionId === 'isWholesale') return d.isWholesale ? '代批' : '非代批';
+      if (selectedDimensionId === 'isWholesale') return d.isWholesale;
       if (selectedDimensionId === 'customerType') return d.customerType === 'New' ? '新客' : '老客';
       if (selectedDimensionId === 'businessOwner') return d.businessOwner;
       if (selectedDimensionId === 'salesperson') return d.salesperson;
+      if (selectedDimensionId === 'category') return `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
       return String((d as any)[selectedDimensionId]);
     });
     return [...new Set(vals)].sort().reverse();
@@ -569,7 +635,127 @@ export default function App() {
                       <span>请先选择维度</span>
                       <ChevronDown size={14} className="opacity-30" />
                     </div>
-                  ) : ['distributorId', 'categoryL2', 'categoryL3', 'categoryL4'].includes(selectedDimensionId) ? (
+                  ) : selectedDimensionId === 'category' ? (
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsCategoryFilterOpen(!isCategoryFilterOpen)}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
+                      >
+                        <span className="truncate">{selectedFilterValue || '选择类目'}</span>
+                        <ChevronDown size={14} className="text-slate-400" />
+                      </button>
+
+                      {isCategoryFilterOpen && (
+                        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] flex flex-col min-w-[600px] animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="p-3 border-b border-slate-100">
+                            <div className="relative">
+                              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                              <input 
+                                type="text"
+                                placeholder="搜索四级类目..."
+                                value={categorySearchQuery}
+                                onChange={(e) => setCategorySearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                              />
+                            </div>
+                          </div>
+                          
+                          {categorySearchQuery ? (
+                            <div className="max-h-64 overflow-y-auto p-2">
+                              {Object.entries(CATEGORY_DATA).flatMap(([l1, l2s]: any) => 
+                                Object.entries(l2s).flatMap(([l2, l3s]: any) => 
+                                  Object.entries(l3s).flatMap(([l3, l4s]: any) => 
+                                    l4s.filter((l4: string) => l4.includes(categorySearchQuery)).map((l4: string) => ({
+                                      path: `${l1} > ${l2} > ${l3} > ${l4}`,
+                                      label: l4
+                                    }))
+                                  )
+                                )
+                              ).map((item) => (
+                                <button
+                                  key={item.path}
+                                  onClick={() => {
+                                    setSelectedFilterValue(item.path);
+                                    setIsCategoryFilterOpen(false);
+                                    setCategorySearchQuery('');
+                                  }}
+                                  className="w-full text-left px-3 py-2 rounded-lg text-xs hover:bg-indigo-50 hover:text-indigo-600 transition-colors"
+                                >
+                                  {item.path}
+                                </button>
+                              ))}
+                            </div>
+                          ) : (
+                            <div className="flex h-80">
+                              {/* L1 */}
+                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                {Object.keys(CATEGORY_DATA).map(l1 => (
+                                  <button
+                                    key={l1}
+                                    onClick={() => setCategoryFilterPath([l1])}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                      categoryFilterPath[0] === l1 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    {l1}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* L2 */}
+                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                {categoryFilterPath[0] && Object.keys(CATEGORY_DATA[categoryFilterPath[0]]).map(l2 => (
+                                  <button
+                                    key={l2}
+                                    onClick={() => setCategoryFilterPath([categoryFilterPath[0], l2])}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                      categoryFilterPath[1] === l2 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    {l2}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* L3 */}
+                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                {categoryFilterPath[1] && Object.keys(CATEGORY_DATA[categoryFilterPath[0]][categoryFilterPath[1]]).map(l3 => (
+                                  <button
+                                    key={l3}
+                                    onClick={() => setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3])}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                      categoryFilterPath[2] === l3 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    {l3}
+                                  </button>
+                                ))}
+                              </div>
+                              {/* L4 */}
+                              <div className="w-1/4 p-2 overflow-y-auto">
+                                {categoryFilterPath[2] && (CATEGORY_DATA[categoryFilterPath[0]][categoryFilterPath[1]][categoryFilterPath[2]] as string[]).map(l4 => (
+                                  <button
+                                    key={l4}
+                                    onClick={() => {
+                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > ${l4}`);
+                                      setIsCategoryFilterOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                      selectedFilterValue?.includes(l4) ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    {l4}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  ) : ['distributorId'].includes(selectedDimensionId) ? (
                     <div className="relative">
                       <input 
                         list="sub-item-list"
