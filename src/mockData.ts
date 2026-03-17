@@ -161,22 +161,32 @@ export const generateKeywordData = (rootWord?: string | null): KeywordData[] => 
   return results;
 };
 
-const platforms = ['淘宝', '京东', '拼多多', '抖音', '快手'];
+const platforms = [
+  '亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', 
+  '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', 
+  '抖音', '得物', '微信视频号'
+];
 const businessOwners = ['方建浩', '孔帅'];
 const salespeople = ['小王', '小李', '小张', '小赵', '小钱'];
+const distributors = ['分销商A', '分销商B', '分销商C', '分销商D', '分销商E'];
 
-const storeAttributions = [
-  '7.阿里-义乌市益瑞康科技有限公司',
-  '9.阿里-义乌市青色贸易有限公司',
-  '66.阿里-义乌市起乾商贸有限公司',
-  '67.阿里-义乌市嘉述贸易有限公司',
-  '68.阿里-义乌市领阅贸易有限公司',
-  '阿里-义乌市数途贸易有限公司',
+export const storeAttributions = [
   '阿里-义乌麦创科技有限公司',
-  '阿里-义乌氪创科技有限公司'
+  '阿里-义乌氪创科技有限公司',
+  '阿里-义乌市数途贸易有限公司',
+  '9.阿里-义乌市青色贸易有限公司',
+  '7.阿里-义乌市益瑞康科技有限公司',
+  '68.阿里-义乌市领阅贸易有限公司',
+  '67.阿里-义乌市嘉述贸易有限公司',
+  '66.阿里-义乌市起乾商贸有限公司'
 ];
 
-const wholesaleTypes: ('代发' | '批发' | '散户')[] = ['代发', '批发', '散户'];
+export const POSITIONS_DATA = {
+  '业务': businessOwners,
+  '销售': salespeople
+};
+
+const wholesaleTypes: ('代发' | '批发' | '散户' | '定制')[] = ['代发', '批发', '散户', '定制'];
 
 const categoryTree = [
   { l1: '办公', l2: '医疗坐垫', l3: '配件', l4: '医疗坐垫配件' },
@@ -279,7 +289,7 @@ export const generateMockData = (count: number = 500): SalesRecord[] => {
     
     data.push({
       id: `rec_${i}`,
-      distributorId: `DIST_${Math.floor(Math.random() * 10) + 100}`,
+      distributorId: distributors[Math.floor(Math.random() * distributors.length)],
       storeName: storeAttributions[Math.floor(Math.random() * storeAttributions.length)],
       platform: platforms[Math.floor(Math.random() * platforms.length)],
       isWholesale: wholesaleTypes[Math.floor(Math.random() * wholesaleTypes.length)],

@@ -12,14 +12,14 @@ import {
   LayoutDashboard, Filter, TrendingUp, TrendingDown, Users, ShoppingBag, 
   Calendar, ChevronDown, ChevronUp, Search, Download, RefreshCw, ChevronLeft, ChevronRight, Play, Trash2, Upload,
   MessageSquare, BarChart2, UserCheck, Map, UploadCloud, Target, 
-  Store as StoreIcon, Megaphone, Type, Box, Key, List, Video, PlayCircle
+  Store as StoreIcon, Megaphone, Type, Box, Key, List, Video, PlayCircle, X, Globe
 } from 'lucide-react';
-import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, startOfYear, subYears, isWithinInterval, parseISO, eachDayOfInterval, isSameDay } from 'date-fns';
+import { format, startOfWeek, endOfWeek, startOfMonth, endOfMonth, subWeeks, subMonths, startOfYear, subYears, isWithinInterval, parseISO, eachDayOfInterval, isSameDay, subDays } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 import { SalesRecord, CompetitiveProduct } from './types';
-import { generateMockData, generateCompetitiveData } from './mockData';
+import { generateMockData, generateCompetitiveData, storeAttributions, POSITIONS_DATA } from './mockData';
 import StrategicMap from './components/StrategicMap';
 
 function cn(...inputs: ClassValue[]) {
@@ -1002,7 +1002,7 @@ const CATEGORY_DATA: any =
 }
 export default function App() {
   const [activeMenu, setActiveMenu] = useState('销售数据分析');
-  const [data] = useState<SalesRecord[]>(() => generateMockData(1000));
+  const [data, setData] = useState<SalesRecord[]>(() => generateMockData(1000));
   const [competitiveData] = useState<CompetitiveProduct[]>(() => generateCompetitiveData(100));
   const [rankingType, setRankingType] = useState('热销榜');
   const [productFilter, setProductFilter] = useState('全部商品');
@@ -1011,8 +1011,62 @@ export default function App() {
   const [showOriginDropdown, setShowOriginDropdown] = useState(false);
   const [tableSortConfig, setTableSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
   const [isCategoryFilterOpen, setIsCategoryFilterOpen] = useState(false);
+  const [isPositionFilterOpen, setIsPositionFilterOpen] = useState(false);
   const [categoryFilterPath, setCategoryFilterPath] = useState<string[]>([]);
+  const [positionFilterPath, setPositionFilterPath] = useState<string[]>([]);
   const [categorySearchQuery, setCategorySearchQuery] = useState('');
+  const [timeRange, setTimeRange] = useState<'昨天' | '上周' | '本周' | '上月' | '本月' | '自定义'>('昨天');
+  const [customDateRange, setCustomDateRange] = useState<{ start: string; end: string }>({
+    start: format(subDays(new Date(), 7), 'yyyy-MM-dd'),
+    end: format(subDays(new Date(), 1), 'yyyy-MM-dd')
+  });
+  const [isManagementOpen, setIsManagementOpen] = useState(false);
+  const [stores, setStores] = useState<string[]>(storeAttributions);
+  const [positions, setPositions] = useState<Record<string, string[]>>(POSITIONS_DATA);
+  const [categories, setCategories] = useState<any>(CATEGORY_DATA);
+  const [platforms, setPlatforms] = useState<string[]>(['亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', '抖音', '得物', '微信视频号']);
+  const [distributors, setDistributors] = useState<string[]>(['分销商A', '分销商B', '分销商C', '分销商D', '分销商E']);
+
+  // Management Modal Local States
+  const [mgmtStoreName, setMgmtStoreName] = useState('');
+  const [mgmtPlatformName, setMgmtPlatformName] = useState('');
+  const [mgmtDistributorName, setMgmtDistributorName] = useState('');
+  const [mgmtL1, setMgmtL1] = useState('');
+  const [mgmtL2, setMgmtL2] = useState('');
+  const [mgmtL3, setMgmtL3] = useState('');
+  const [mgmtL4, setMgmtL4] = useState('');
+  const [newL1, setNewL1] = useState('');
+  const [newL2, setNewL2] = useState('');
+  const [newL3, setNewL3] = useState('');
+  const [mgmtPositionType, setMgmtPositionType] = useState('');
+  const [mgmtPersonnelName, setMgmtPersonnelName] = useState('');
+  const [mgmtCategorySearch, setMgmtCategorySearch] = useState('');
+
+  // Confirmation Dialog Helper
+  const showConfirm = (title: string, message: string, onConfirm: () => void) => {
+    setConfirmDialog({
+      isOpen: true,
+      title,
+      message,
+      onConfirm: () => {
+        onConfirm();
+        setConfirmDialog(prev => ({ ...prev, isOpen: false }));
+      }
+    });
+  };
+
+  // Confirmation Dialog State
+  const [confirmDialog, setConfirmDialog] = useState<{
+    isOpen: boolean;
+    title: string;
+    message: string;
+    onConfirm: () => void;
+  }>({
+    isOpen: false,
+    title: '',
+    message: '',
+    onConfirm: () => {},
+  });
 
   const provinces = [
     '全部', '北京', '天津', '河北', '山西', '内蒙古', '辽宁', '吉林', '黑龙江', '上海', 
@@ -1039,54 +1093,104 @@ export default function App() {
     { id: 'AI直播营销视频', icon: PlayCircle },
   ];
 
-  const [selectedDimensionId, setSelectedDimensionId] = useState('');
+  const [selectedDimensionId, setSelectedDimensionId] = useState('storeName');
   const [selectedFilterValue, setSelectedFilterValue] = useState<string | null>(null);
+  const [dashboardDimensionId, setDashboardDimensionId] = useState('platform');
+  const [dashboardFilterValue, setDashboardFilterValue] = useState<string | null>(null);
+  const [dashboardSearchQuery, setDashboardSearchQuery] = useState('');
+  const [isDashboardFilterOpen, setIsDashboardFilterOpen] = useState(false);
   const [selectedMetric, setSelectedMetric] = useState<'salesAmount' | 'salesVolume'>('salesAmount');
   const [selectedYear, setSelectedYear] = useState<number | 'all'>(new Date().getFullYear());
   const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all');
 
-  const dimensions = [
-    { id: 'distributorId', label: '分销商' },
-    { id: 'storeName', label: '店铺归属' },
-    { id: 'platform', label: '平台' },
-    { id: 'customerType', label: '新老客' },
-    { id: 'isWholesale', label: '代批' },
+  const filterDimensions = [
+    { id: 'storeName', label: '阿里店铺' },
     { id: 'category', label: '类目' },
-    { id: 'businessOwner', label: '业务负责人' },
-    { id: 'salesperson', label: '销售员' },
+    { id: 'position', label: '岗位' },
   ];
+
+  const dashboardDimensions = [
+    { id: 'platform', label: '客户销售渠道' },
+    { id: 'customerType', label: '新老客' },
+    { id: 'isWholesale', label: '销售类型' },
+    { id: 'distributorId', label: '分销商' },
+  ];
+
+  const dashboardHierarchy = [
+    {
+      id: 'platform',
+      label: '客户销售渠道',
+      searchable: true,
+      children: ['亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', '抖音', '得物', '微信视频号']
+    },
+    {
+      id: 'customerType',
+      label: '新老客',
+      children: ['新客', '老客']
+    },
+    {
+      id: 'isWholesale',
+      label: '销售类型',
+      children: ['代发', '批发', '散户', '定制']
+    },
+    {
+      id: 'distributorId',
+      label: '分销商',
+      searchable: true,
+      children: distributors
+    }
+  ];
+
+  const dimensions = [...filterDimensions, ...dashboardDimensions];
 
   // Reset filter value when dimension changes
   useEffect(() => {
-    setSelectedFilterValue(null);
+    if (selectedDimensionId === 'storeName') {
+      setSelectedFilterValue('全部店铺');
+    } else {
+      setSelectedFilterValue(null);
+    }
   }, [selectedDimensionId]);
 
   const filteredData = useMemo(() => {
     let result = data;
 
-    // Year/Month Filter
-    if (selectedYear !== 'all') {
-      result = result.filter(d => new Date(d.date).getFullYear() === selectedYear);
-    }
-    if (selectedMonth !== 'all') {
-      result = result.filter(d => new Date(d.date).getMonth() === selectedMonth);
+    // Time Range Filter
+    const now = new Date();
+    let start: Date;
+    let end: Date = now;
+
+    if (timeRange === '昨天') {
+      start = subDays(now, 1);
+      start.setHours(0, 0, 0, 0);
+      end = subDays(now, 1);
+      end.setHours(23, 59, 59, 999);
+    } else if (timeRange === '本周') {
+      start = startOfWeek(now);
+    } else if (timeRange === '上周') {
+      start = startOfWeek(subWeeks(now, 1));
+      end = endOfWeek(subWeeks(now, 1));
+    } else if (timeRange === '本月') {
+      start = startOfMonth(now);
+    } else if (timeRange === '上月') {
+      start = startOfMonth(subMonths(now, 1));
+      end = endOfMonth(subMonths(now, 1));
+    } else {
+      start = parseISO(customDateRange.start);
+      end = parseISO(customDateRange.end);
     }
 
-    if (!selectedFilterValue) return result;
+    result = result.filter(d => isWithinInterval(parseISO(d.date), { start, end }));
+
+    if (!selectedFilterValue || selectedFilterValue === '全部店铺') return result;
     
     return result.filter(d => {
-      if (selectedDimensionId === 'isWholesale') {
-        return d.isWholesale === selectedFilterValue;
-      }
-      if (selectedDimensionId === 'customerType') {
-        const val = d.customerType === 'New' ? '新客' : '老客';
-        return val === selectedFilterValue;
-      }
-      if (selectedDimensionId === 'businessOwner') {
-        return d.businessOwner === selectedFilterValue;
-      }
-      if (selectedDimensionId === 'salesperson') {
-        return d.salesperson === selectedFilterValue;
+      if (selectedDimensionId === 'position') {
+        const [type, name] = selectedFilterValue.split(' > ');
+        if (!name) return d.businessOwner === type || d.salesperson === type;
+        if (type === '业务') return d.businessOwner === name;
+        if (type === '销售') return d.salesperson === name;
+        return true;
       }
       if (selectedDimensionId === 'category') {
         const path = selectedFilterValue.split(' > ');
@@ -1101,91 +1205,32 @@ export default function App() {
       }
       return String((d as any)[selectedDimensionId]) === selectedFilterValue;
     });
-  }, [data, selectedDimensionId, selectedFilterValue, selectedYear, selectedMonth]);
+  }, [data, selectedDimensionId, selectedFilterValue, selectedYear, selectedMonth, timeRange, customDateRange]);
 
-  const processedCompetitiveData = useMemo(() => {
-    let result = [...competitiveData];
-
-    // Filter by Level 2 tabs
-    if (productFilter === '金冠品') {
-      result = result.filter(p => p.isGoldCrown);
-    } else if (productFilter === '潜力品') {
-      result = result.filter(p => p.isPotential);
-    }
-
-    // Filter by Origin
-    if (originFilter !== 'all' && originFilter !== '全部') {
-      result = result.filter(p => p.origin.includes(originFilter));
-    }
-
-    // Default sorting based on rankingType (to establish base rank)
-    result.sort((a, b) => {
-      if (rankingType === '热销榜') return b.transactionIndex - a.transactionIndex;
-      if (rankingType === '热访榜') return b.trafficIndex - a.trafficIndex;
-      if (rankingType === '热搜榜') return b.searchIndex - a.searchIndex;
-      if (rankingType === '飙升榜') return b.searchGrowth - a.searchGrowth;
-      if (rankingType === '询盘榜') return b.effectiveInquiryIndex - a.effectiveInquiryIndex;
-      return b.transactionIndex - a.transactionIndex;
-    });
-
-    // Add rank property for sorting by rank
-    const rankedData = result.map((p, i) => ({ ...p, _rank: i + 1 }));
-
-    // Apply custom sort if configured
-    if (sortConfig) {
-      rankedData.sort((a, b) => {
-        if (sortConfig.key === 'rank') {
-          return sortConfig.direction === 'asc' ? b._rank - a._rank : a._rank - b._rank;
-        }
-        const aVal = a[sortConfig.key as keyof CompetitiveProduct];
-        const bVal = b[sortConfig.key as keyof CompetitiveProduct];
-
-        if (typeof aVal === 'number' && typeof bVal === 'number') {
-          return sortConfig.direction === 'asc' ? bVal - aVal : aVal - bVal;
-        }
-        if (typeof aVal === 'string' && typeof bVal === 'string') {
-          return sortConfig.direction === 'asc' ? bVal.localeCompare(aVal) : aVal.localeCompare(bVal);
-        }
-        return 0;
-      });
-    }
-
-    return rankedData;
-  }, [competitiveData, productFilter, originFilter, sortConfig, rankingType]);
-
-  const handleSort = (key: keyof CompetitiveProduct | 'rank') => {
-    setSortConfig(prev => {
-      if (prev?.key === key) {
-        if (prev.direction === 'asc') return { key, direction: 'desc' };
-        return null;
-      }
-      return { key, direction: 'asc' };
-    });
-  };
-
-  const handleTableSort = (key: string) => {
-    setTableSortConfig(prev => {
-      if (prev?.key === key) {
-        if (prev.direction === 'asc') return { key, direction: 'desc' };
-        return null;
-      }
-      return { key, direction: 'asc' };
-    });
-  };
-
-  // Available values for the selected dimension (for the dropdown)
   const availableValues = useMemo(() => {
     if (!selectedDimensionId) return [];
+    if (selectedDimensionId === 'storeName') return ['全部店铺', ...[...stores].sort()];
+    if (selectedDimensionId === 'position') {
+      return Object.entries(positions).flatMap(([type, names]: [string, any]) => names.map((name: string) => `${type} > ${name}`)).sort();
+    }
+    if (selectedDimensionId === 'category') {
+      return Object.entries(categories).flatMap(([l1, l2s]: [string, any]) => 
+        Object.entries(l2s).flatMap(([l2, l3s]: [string, any]) => 
+          Object.entries(l3s).flatMap(([l3, l4s]: [string, any]) => 
+            l4s.map((l4: string) => `${l1} > ${l2} > ${l3} > ${l4}`)
+          )
+        )
+      ).sort();
+    }
     const vals = data.map(d => {
       if (selectedDimensionId === 'isWholesale') return d.isWholesale;
       if (selectedDimensionId === 'customerType') return d.customerType === 'New' ? '新客' : '老客';
-      if (selectedDimensionId === 'businessOwner') return d.businessOwner;
-      if (selectedDimensionId === 'salesperson') return d.salesperson;
-      if (selectedDimensionId === 'category') return `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+      if (selectedDimensionId === 'platform') return d.platform;
+      if (selectedDimensionId === 'distributorId') return d.distributorId;
       return String((d as any)[selectedDimensionId]);
     });
     return [...new Set(vals)].sort().reverse();
-  }, [data, selectedDimensionId]);
+  }, [data, selectedDimensionId, stores, positions, categories]);
 
   // Trend Data Calculations
   const trendData = useMemo(() => {
@@ -1314,29 +1359,57 @@ export default function App() {
     };
 
     return dimensions
-      .filter(d => d.id === selectedDimensionId)
+      .filter(d => d.id === dashboardDimensionId)
       .map(dim => {
-        const subset = data;
-        const selection = selectedFilterValue || '全部';
+        let subset = filteredData;
+        const selection = dashboardFilterValue || '全部';
+
+        if (dashboardFilterValue) {
+          subset = subset.filter(d => {
+            if (dim.id === 'customerType') {
+              const val = d.customerType === 'New' ? '新客' : '老客';
+              return val === dashboardFilterValue;
+            }
+            return String((d as any)[dim.id]) === dashboardFilterValue;
+          });
+        }
 
         // Calculate breakdown for the selected dimension
+        const hierarchy = dashboardHierarchy.find(h => h.id === dim.id);
+        const allKeys = hierarchy ? hierarchy.children : [];
+        
         const groups: Record<string, SalesRecord[]> = {};
-        data.forEach(d => {
+        
+        // Initialize groups with all possible keys to ensure they appear in the table even with 0 data
+        // If a specific value is filtered, we only show that one
+        if (dashboardFilterValue) {
+          groups[dashboardFilterValue] = [];
+        } else {
+          allKeys.forEach(key => {
+            groups[key] = [];
+          });
+        }
+
+        subset.forEach(d => {
           let key = '';
           if (dim.id === 'isWholesale') {
-            key = d.isWholesale ? '代批' : '非代批';
+            key = d.isWholesale;
           } else if (dim.id === 'customerType') {
             key = d.customerType === 'New' ? '新客' : '老客';
-          } else if (dim.id === 'businessOwner') {
-            key = d.businessOwner;
-          } else if (dim.id === 'salesperson') {
-            key = d.salesperson;
+          } else if (dim.id === 'platform') {
+            key = d.platform;
+          } else if (dim.id === 'distributorId') {
+            key = d.distributorId;
           } else {
             key = String((d as any)[dim.id]);
           }
-
-          if (!groups[key]) groups[key] = [];
-          groups[key].push(d);
+          
+          if (groups[key]) {
+            groups[key].push(d);
+          } else if (!dashboardFilterValue && key) {
+            // Catch-all for values not in hierarchy if no filter is active
+            groups[key] = [d];
+          }
         });
 
         const breakdown = Object.entries(groups)
@@ -1373,7 +1446,59 @@ export default function App() {
           breakdown
         };
       });
-  }, [data, selectedDimensionId, selectedFilterValue, selectedMetric, tableSortConfig]);
+  }, [filteredData, dashboardDimensionId, dashboardFilterValue, selectedMetric, tableSortConfig]);
+
+  const processedCompetitiveData = useMemo(() => {
+    let result = competitiveData;
+
+    if (productFilter !== '全部商品') {
+      result = result.filter(d => d.productType === productFilter);
+    }
+
+    if (originFilter !== 'all') {
+      result = result.filter(d => d.origin === originFilter);
+    }
+
+    const sortedData = [...result].sort((a, b) => {
+      if (!sortConfig) return 0;
+      const { key, direction } = sortConfig;
+      let valA: any = a[key as keyof CompetitiveProduct];
+      let valB: any = b[key as keyof CompetitiveProduct];
+
+      if (valA < valB) return direction === 'asc' ? -1 : 1;
+      if (valA > valB) return direction === 'asc' ? 1 : -1;
+      return 0;
+    });
+
+    const rankedData = sortedData.map((d, i) => ({
+      ...d,
+      rank: i + 1
+    }));
+
+    if (rankingType === 'top10') {
+      return rankedData.slice(0, 10);
+    } else if (rankingType === 'top50') {
+      return rankedData.slice(0, 50);
+    }
+
+    return rankedData;
+  }, [competitiveData, productFilter, originFilter, sortConfig, rankingType]);
+
+  const handleSort = (key: keyof CompetitiveProduct | 'rank') => {
+    setSortConfig(prev => ({
+      key,
+      direction: prev?.key === key && prev.direction === 'desc' ? 'asc' : 'desc'
+    }));
+  };
+
+  const handleTableSort = (key: string) => {
+    setTableSortConfig(prev => {
+      if (prev?.key === key) {
+        return { key, direction: prev.direction === 'asc' ? 'desc' : 'asc' };
+      }
+      return { key, direction: 'desc' };
+    });
+  };
 
   return (
     <div className="min-h-screen bg-slate-50 flex">
@@ -1466,32 +1591,41 @@ export default function App() {
                 <span className="text-sm font-bold text-slate-700">维度筛选</span>
               </div>
 
-              <div className="flex items-center gap-3 flex-1">
-                <div className="w-28">
-                  <select 
-                    value={selectedYear}
-                    onChange={(e) => setSelectedYear(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
-                  >
-                    <option value="all">全部年份</option>
-                    <option value={2026}>2026年</option>
-                    <option value={2025}>2025年</option>
-                    <option value={2024}>2024年</option>
-                  </select>
+              <div className="flex items-center gap-3 flex-1 flex-wrap">
+                <div className="flex bg-slate-100 p-1 rounded-xl shrink-0">
+                  {(['昨天', '上周', '本周', '上月', '本月', '自定义'] as const).map((range) => (
+                    <button
+                      key={range}
+                      onClick={() => setTimeRange(range)}
+                      className={cn(
+                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all",
+                        timeRange === range 
+                          ? "bg-white text-indigo-600 shadow-sm" 
+                          : "text-slate-500 hover:text-slate-700"
+                      )}
+                    >
+                      {range}
+                    </button>
+                  ))}
                 </div>
 
-                <div className="w-28">
-                  <select 
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value === 'all' ? 'all' : Number(e.target.value))}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-3 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
-                  >
-                    <option value="all">全部月份</option>
-                    {Array.from({ length: 12 }).map((_, i) => (
-                      <option key={i} value={i}>{i + 1}月</option>
-                    ))}
-                  </select>
-                </div>
+                {timeRange === '自定义' && (
+                  <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-xl px-3 py-1.5 shrink-0">
+                    <input 
+                      type="date" 
+                      value={customDateRange.start}
+                      onChange={(e) => setCustomDateRange(prev => ({ ...prev, start: e.target.value }))}
+                      className="bg-transparent text-[10px] font-medium text-slate-700 outline-none w-24"
+                    />
+                    <span className="text-slate-400 text-[10px]">至</span>
+                    <input 
+                      type="date" 
+                      value={customDateRange.end}
+                      onChange={(e) => setCustomDateRange(prev => ({ ...prev, end: e.target.value }))}
+                      className="bg-transparent text-[10px] font-medium text-slate-700 outline-none w-24"
+                    />
+                  </div>
+                )}
 
                 <div className="h-8 w-px bg-slate-200 mx-1" />
 
@@ -1502,7 +1636,7 @@ export default function App() {
                     className={`w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer ${!selectedDimensionId ? 'text-slate-400' : 'text-slate-700'}`}
                   >
                     <option value="" disabled>请选择筛选项</option>
-                    {dimensions.map(dim => (
+                    {filterDimensions.map(dim => (
                       <option key={dim.id} value={dim.id} className="text-slate-700">{dim.label}</option>
                     ))}
                   </select>
@@ -1517,7 +1651,10 @@ export default function App() {
                   ) : selectedDimensionId === 'category' ? (
                     <div className="relative">
                       <button 
-                        onClick={() => setIsCategoryFilterOpen(!isCategoryFilterOpen)}
+                        onClick={() => {
+                          setIsCategoryFilterOpen(!isCategoryFilterOpen);
+                          setIsPositionFilterOpen(false);
+                        }}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
                       >
                         <span className="truncate">{selectedFilterValue || '选择类目'}</span>
@@ -1541,16 +1678,20 @@ export default function App() {
                           
                           {categorySearchQuery ? (
                             <div className="max-h-64 overflow-y-auto p-2">
-                              {Object.entries(CATEGORY_DATA).flatMap(([l1, l2s]: any) => 
-                                Object.entries(l2s).flatMap(([l2, l3s]: any) => 
-                                  Object.entries(l3s).flatMap(([l3, l4s]: any) => 
-                                    l4s.filter((l4: string) => l4.includes(categorySearchQuery)).map((l4: string) => ({
-                                      path: `${l1} > ${l2} > ${l3} > ${l4}`,
-                                      label: l4
-                                    }))
-                                  )
-                                )
-                              ).map((item) => (
+                              {Object.entries(categories).flatMap(([l1, l2s]: any) => {
+                                const results = [];
+                                if (l1.includes(categorySearchQuery)) results.push({ path: l1, label: l1 });
+                                Object.entries(l2s).forEach(([l2, l3s]: any) => {
+                                  if (l2.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2}`, label: l2 });
+                                  Object.entries(l3s).forEach(([l3, l4s]: any) => {
+                                    if (l3.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2} > ${l3}`, label: l3 });
+                                    l4s.forEach((l4: string) => {
+                                      if (l4.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2} > ${l3} > ${l4}`, label: l4 });
+                                    });
+                                  });
+                                });
+                                return results;
+                              }).map((item) => (
                                 <button
                                   key={item.path}
                                   onClick={() => {
@@ -1568,10 +1709,18 @@ export default function App() {
                             <div className="flex h-80">
                               {/* L1 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
-                                {Object.keys(CATEGORY_DATA).map(l1 => (
+                                {Object.keys(categories).map(l1 => (
                                   <button
                                     key={l1}
-                                    onClick={() => setCategoryFilterPath([l1])}
+                                    onClick={() => {
+                                      setCategoryFilterPath([l1]);
+                                      setSelectedFilterValue(l1);
+                                    }}
+                                    onDoubleClick={() => {
+                                      setCategoryFilterPath([l1]);
+                                      setSelectedFilterValue(l1);
+                                      setIsCategoryFilterOpen(false);
+                                    }}
                                     className={cn(
                                       "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                                       categoryFilterPath[0] === l1 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
@@ -1583,10 +1732,18 @@ export default function App() {
                               </div>
                               {/* L2 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
-                                {categoryFilterPath[0] && Object.keys(CATEGORY_DATA[categoryFilterPath[0]]).map(l2 => (
+                                {categoryFilterPath[0] && Object.keys(categories[categoryFilterPath[0]]).map(l2 => (
                                   <button
                                     key={l2}
-                                    onClick={() => setCategoryFilterPath([categoryFilterPath[0], l2])}
+                                    onClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], l2]);
+                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${l2}`);
+                                    }}
+                                    onDoubleClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], l2]);
+                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${l2}`);
+                                      setIsCategoryFilterOpen(false);
+                                    }}
                                     className={cn(
                                       "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                                       categoryFilterPath[1] === l2 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
@@ -1598,10 +1755,18 @@ export default function App() {
                               </div>
                               {/* L3 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
-                                {categoryFilterPath[1] && Object.keys(CATEGORY_DATA[categoryFilterPath[0]][categoryFilterPath[1]]).map(l3 => (
+                                {categoryFilterPath[1] && Object.keys(categories[categoryFilterPath[0]][categoryFilterPath[1]]).map(l3 => (
                                   <button
                                     key={l3}
-                                    onClick={() => setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3])}
+                                    onClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3]);
+                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${l3}`);
+                                    }}
+                                    onDoubleClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3]);
+                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${l3}`);
+                                      setIsCategoryFilterOpen(false);
+                                    }}
                                     className={cn(
                                       "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
                                       categoryFilterPath[2] === l3 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
@@ -1613,7 +1778,7 @@ export default function App() {
                               </div>
                               {/* L4 */}
                               <div className="w-1/4 p-2 overflow-y-auto">
-                                {categoryFilterPath[2] && (CATEGORY_DATA[categoryFilterPath[0]][categoryFilterPath[1]][categoryFilterPath[2]] as string[]).map(l4 => (
+                                {categoryFilterPath[2] && (categories[categoryFilterPath[0]][categoryFilterPath[1]][categoryFilterPath[2]] as string[]).map(l4 => (
                                   <button
                                     key={l4}
                                     onClick={() => {
@@ -1634,36 +1799,124 @@ export default function App() {
                         </div>
                       )}
                     </div>
-                  ) : ['distributorId'].includes(selectedDimensionId) ? (
+                  ) : selectedDimensionId === 'position' ? (
                     <div className="relative">
-                      <input 
-                        list="sub-item-list"
-                        type="text"
-                        placeholder="输入搜索细分项..."
-                        value={selectedFilterValue || ''}
-                        onChange={(e) => setSelectedFilterValue(e.target.value || null)}
-                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all"
-                      />
-                      <datalist id="sub-item-list">
-                        {availableValues.map(val => (
-                          <option key={val} value={val} />
-                        ))}
-                      </datalist>
-                      <Search size={14} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
+                      <button 
+                        onClick={() => {
+                          setIsPositionFilterOpen(!isPositionFilterOpen);
+                          setIsCategoryFilterOpen(false);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
+                      >
+                        <span className="truncate">{selectedFilterValue || '选择岗位'}</span>
+                        <ChevronDown size={14} className="text-slate-400" />
+                      </button>
+
+                      {isPositionFilterOpen && (
+                        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] flex flex-col min-w-[300px] animate-in fade-in slide-in-from-top-2 duration-200">
+                          <div className="flex h-64">
+                            {/* Type */}
+                            <div className="w-1/2 border-r border-slate-100 p-2 overflow-y-auto">
+                              {Object.keys(positions).map(type => (
+                                <button
+                                  key={type}
+                                  onClick={() => {
+                                    setPositionFilterPath([type]);
+                                    setSelectedFilterValue(type);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    positionFilterPath[0] === type ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  {type}
+                                </button>
+                              ))}
+                            </div>
+                            {/* Name */}
+                            <div className="w-1/2 p-2 overflow-y-auto">
+                              {positionFilterPath[0] && (positions as any)[positionFilterPath[0]].map((name: string) => (
+                                <button
+                                  key={name}
+                                  onClick={() => {
+                                    setSelectedFilterValue(`${positionFilterPath[0]} > ${name}`);
+                                    setIsPositionFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    selectedFilterValue === `${positionFilterPath[0]} > ${name}` ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  {name}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ) : (
-                    <select 
-                      value={selectedFilterValue || ''}
-                      onChange={(e) => setSelectedFilterValue(e.target.value || null)}
-                      className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all cursor-pointer"
-                    >
-                      <option value="">全部细分项</option>
-                      {availableValues.map(val => (
-                        <option key={val} value={val}>{val}</option>
-                      ))}
-                    </select>
+                    <div className="relative">
+                      <button 
+                        onClick={() => {
+                          setIsPositionFilterOpen(!isPositionFilterOpen);
+                          setIsCategoryFilterOpen(false);
+                        }}
+                        className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
+                      >
+                        <span className="truncate">{selectedFilterValue || `选择${dimensions.find(d => d.id === selectedDimensionId)?.label}`}</span>
+                        <ChevronDown size={14} className="text-slate-400" />
+                      </button>
+
+                      {isPositionFilterOpen && (
+                        <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] flex flex-col min-w-[200px] animate-in fade-in slide-in-from-top-2 duration-200">
+                          {(selectedDimensionId === 'platform' || selectedDimensionId === 'distributorId' || selectedDimensionId === 'storeName') && (
+                            <div className="p-3 border-b border-slate-100">
+                              <div className="relative">
+                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input 
+                                  type="text"
+                                  placeholder="搜索..."
+                                  value={categorySearchQuery}
+                                  onChange={(e) => setCategorySearchQuery(e.target.value)}
+                                  className="w-full pl-9 pr-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
+                                />
+                              </div>
+                            </div>
+                          )}
+                          <div className="max-h-64 overflow-y-auto p-2">
+                            {availableValues.filter(v => v.toLowerCase().includes(categorySearchQuery.toLowerCase())).map(val => (
+                              <button
+                                key={val}
+                                onClick={() => {
+                                  setSelectedFilterValue(val);
+                                  setIsPositionFilterOpen(false);
+                                  setCategorySearchQuery('');
+                                }}
+                                className={cn(
+                                  "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                  selectedFilterValue === val ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                )}
+                              >
+                                {val}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
+
+                <div className="h-8 w-px bg-slate-200 mx-1" />
+
+                <button 
+                  onClick={() => setIsManagementOpen(true)}
+                  className="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 px-4 py-2.5 rounded-xl text-sm font-bold transition-all"
+                >
+                  <RefreshCw size={16} />
+                  <span>管理项</span>
+                </button>
 
                 {selectedFilterValue && (
                   <button 
@@ -1828,18 +2081,118 @@ export default function App() {
                   <h2 className="text-lg font-bold text-slate-900">维度增长看板</h2>
                   <p className="text-xs text-slate-500 mt-1">按不同维度查看各指标的同比增长情况（展示各维度{selectedMetric === 'salesAmount' ? '销售额' : '销量'}前5名）</p>
                 </div>
-                <div className="flex items-center gap-3">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
-                    <input 
-                      type="text"
-                      placeholder="全局搜索维度项..."
-                      className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-full text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-64 transition-all"
-                      value={globalSearch}
-                      onChange={(e) => setGlobalSearch(e.target.value)}
-                    />
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl w-fit">
+                    {dashboardHierarchy.map(group => (
+                      <button
+                        key={group.id}
+                        onClick={() => {
+                          setDashboardDimensionId(group.id);
+                          setDashboardFilterValue(null);
+                        }}
+                        className={cn(
+                          "px-4 py-2 rounded-lg text-xs font-bold transition-all whitespace-nowrap",
+                          dashboardDimensionId === group.id 
+                            ? "bg-white text-indigo-600 shadow-sm" 
+                            : "text-slate-500 hover:text-slate-700"
+                        )}
+                      >
+                        {group.label}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="flex items-center gap-4">
+                    <div className="relative">
+                      <button 
+                        onClick={() => setIsDashboardFilterOpen(!isDashboardFilterOpen)}
+                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold transition-all text-slate-700 shadow-sm hover:border-indigo-300"
+                      >
+                        <Filter size={14} className="text-slate-400" />
+                        <span>{dashboardFilterValue || '全部' + dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
+                        <ChevronDown size={14} className="ml-1 opacity-50" />
+                      </button>
+
+                      {isDashboardFilterOpen && (
+                        <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                          <div className="p-3 border-b border-slate-50">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">筛选{dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
+                              {dashboardFilterValue && (
+                                <button 
+                                  onClick={() => {
+                                    setDashboardFilterValue(null);
+                                    setIsDashboardFilterOpen(false);
+                                  }}
+                                  className="text-[10px] text-indigo-600 hover:underline"
+                                >
+                                  重置
+                                </button>
+                              )}
+                            </div>
+                            {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.searchable && (
+                              <div className="relative">
+                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                <input 
+                                  type="text"
+                                  placeholder="搜索..."
+                                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                                  autoFocus
+                                  onChange={(e) => setDashboardSearchQuery(e.target.value)}
+                                  value={dashboardSearchQuery}
+                                />
+                              </div>
+                            )}
+                          </div>
+                          <div className="max-h-64 overflow-y-auto p-1">
+                            <button
+                              onClick={() => {
+                                setDashboardFilterValue(null);
+                                setIsDashboardFilterOpen(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                !dashboardFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              全部
+                            </button>
+                            {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.children
+                              .filter(child => !dashboardSearchQuery || child.toLowerCase().includes(dashboardSearchQuery.toLowerCase()))
+                              .map(child => (
+                                <button
+                                  key={child}
+                                  onClick={() => {
+                                    setDashboardFilterValue(child);
+                                    setIsDashboardFilterOpen(false);
+                                    setDashboardSearchQuery('');
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                    dashboardFilterValue === child ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  {child}
+                                </button>
+                              ))}
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
+                      <input 
+                        type="text"
+                        placeholder="在结果中搜索..."
+                        className="pl-9 pr-4 py-2 bg-white border border-slate-200 rounded-full text-xs focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none w-64 transition-all shadow-sm"
+                        value={globalSearch}
+                        onChange={(e) => setGlobalSearch(e.target.value)}
+                      />
+                    </div>
                   </div>
                 </div>
+
               </div>
               
               <div className="overflow-x-auto">
@@ -2294,6 +2647,515 @@ export default function App() {
           </div>
         )}
       </div>
+
+      {/* Management Modal */}
+      {isManagementOpen && (
+        <div className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[90vh]">
+            <div className="p-6 border-b border-slate-100 flex items-center justify-between shrink-0">
+              <h3 className="text-lg font-bold text-slate-900">管理后台</h3>
+              <button 
+                onClick={() => setIsManagementOpen(false)}
+                className="p-2 hover:bg-slate-100 rounded-full transition-colors"
+              >
+                <X size={20} className="text-slate-400" />
+              </button>
+            </div>
+            
+            <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1">
+              {/* Add Ali Store */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <StoreIcon size={16} className="text-indigo-500" />
+                  阿里店铺管理
+                </h4>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="输入新店铺名称..."
+                    value={mgmtStoreName}
+                    onChange={(e) => setMgmtStoreName(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (mgmtStoreName) {
+                        setStores(prev => [...prev, mgmtStoreName]);
+                        setMgmtStoreName('');
+                      }
+                    }}
+                    className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors"
+                  >
+                    添加店铺
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {stores.map(store => (
+                    <div key={store} className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 group">
+                      <span>{store}</span>
+                      <button 
+                        onClick={() => showConfirm('确认删除', `确定要删除店铺 "${store}" 吗？`, () => {
+                          setStores(prev => prev.filter(s => s !== store));
+                        })}
+                        className="text-slate-400 hover:text-rose-500 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add Product */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Box size={16} className="text-emerald-500" />
+                  类目层级管理
+                </h4>
+                <div className="grid grid-cols-4 gap-3">
+                  <div className="space-y-2">
+                    <select 
+                      value={mgmtL1}
+                      onChange={(e) => { setMgmtL1(e.target.value); setMgmtL2(''); setMgmtL3(''); }}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none"
+                    >
+                      <option value="">一级类目</option>
+                      {Object.keys(categories).map(l1 => <option key={l1} value={l1}>{l1}</option>)}
+                    </select>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="新增一级..."
+                        value={newL1}
+                        onChange={(e) => setNewL1(e.target.value)}
+                        className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] outline-none"
+                      />
+                      <button 
+                        onClick={() => {
+                          if (newL1 && !categories[newL1]) {
+                            setCategories(prev => ({ ...prev, [newL1]: {} }));
+                            setNewL1('');
+                          }
+                        }}
+                        className="bg-emerald-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <select 
+                      value={mgmtL2}
+                      onChange={(e) => { setMgmtL2(e.target.value); setMgmtL3(''); }}
+                      disabled={!mgmtL1}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none disabled:opacity-50"
+                    >
+                      <option value="">二级类目</option>
+                      {mgmtL1 && Object.keys(categories[mgmtL1]).map(l2 => <option key={l2} value={l2}>{l2}</option>)}
+                    </select>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="新增二级..."
+                        value={newL2}
+                        onChange={(e) => setNewL2(e.target.value)}
+                        disabled={!mgmtL1}
+                        className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] outline-none disabled:opacity-50"
+                      />
+                      <button 
+                        onClick={() => {
+                          if (mgmtL1 && newL2 && !categories[mgmtL1][newL2]) {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              next[mgmtL1] = { ...next[mgmtL1], [newL2]: {} };
+                              return next;
+                            });
+                            setNewL2('');
+                          }
+                        }}
+                        disabled={!mgmtL1}
+                        className="bg-emerald-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold disabled:opacity-50"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <select 
+                      value={mgmtL3}
+                      onChange={(e) => setMgmtL3(e.target.value)}
+                      disabled={!mgmtL2}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none disabled:opacity-50"
+                    >
+                      <option value="">三级类目</option>
+                      {mgmtL2 && Object.keys(categories[mgmtL1][mgmtL2]).map(l3 => <option key={l3} value={l3}>{l3}</option>)}
+                    </select>
+                    <div className="flex gap-1">
+                      <input 
+                        type="text" 
+                        placeholder="新增三级..."
+                        value={newL3}
+                        onChange={(e) => setNewL3(e.target.value)}
+                        disabled={!mgmtL2}
+                        className="flex-1 px-2 py-1 bg-white border border-slate-200 rounded-lg text-[10px] outline-none disabled:opacity-50"
+                      />
+                      <button 
+                        onClick={() => {
+                          if (mgmtL1 && mgmtL2 && newL3 && !categories[mgmtL1][mgmtL2][newL3]) {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              next[mgmtL1][mgmtL2] = { ...next[mgmtL1][mgmtL2], [newL3]: [] };
+                              return next;
+                            });
+                            setNewL3('');
+                          }
+                        }}
+                        disabled={!mgmtL2}
+                        className="bg-emerald-600 text-white px-2 py-1 rounded-lg text-[10px] font-bold disabled:opacity-50"
+                      >
+                        +
+                      </button>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <input 
+                      type="text" 
+                      placeholder="输入四级类目名称..."
+                      value={mgmtL4}
+                      onChange={(e) => setMgmtL4(e.target.value)}
+                      disabled={!mgmtL3}
+                      className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs outline-none focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50"
+                    />
+                    <button 
+                      onClick={() => {
+                        if (mgmtL1 && mgmtL2 && mgmtL3 && mgmtL4) {
+                          const newCategories = { ...categories };
+                          newCategories[mgmtL1][mgmtL2][mgmtL3] = [...(newCategories[mgmtL1][mgmtL2][mgmtL3] || []), mgmtL4];
+                          setCategories(newCategories);
+                          setMgmtL4('');
+                        }
+                      }}
+                      disabled={!mgmtL4}
+                      className="w-full bg-emerald-600 text-white px-4 py-1.5 rounded-xl text-[10px] font-bold hover:bg-emerald-700 transition-colors disabled:opacity-50"
+                    >
+                      添加四级
+                    </button>
+                  </div>
+                </div>
+
+                {/* Display Current Categories for Deletion */}
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <p className="text-[10px] font-bold text-slate-400 uppercase">搜索并删除层级</p>
+                    <div className="relative flex items-center gap-2">
+                      <div className="relative">
+                        <Search size={12} className="absolute left-2 top-1/2 -translate-y-1/2 text-slate-400" />
+                        <input 
+                          type="text" 
+                          placeholder="搜索类目..."
+                          value={mgmtCategorySearch}
+                          onChange={(e) => setMgmtCategorySearch(e.target.value)}
+                          className="pl-7 pr-3 py-1 bg-slate-50 border border-slate-200 rounded-lg text-[10px] outline-none focus:ring-1 focus:ring-indigo-500/30 w-40"
+                        />
+                      </div>
+                      {mgmtCategorySearch && (
+                        <button 
+                          onClick={() => setMgmtCategorySearch('')}
+                          className="text-[10px] text-indigo-600 hover:underline"
+                        >
+                          清除
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                  <div className="max-h-64 overflow-y-auto border border-slate-100 rounded-xl p-2 space-y-2">
+                    {/* L1s */}
+                    {Object.keys(categories).filter(l1 => l1.includes(mgmtCategorySearch)).map(l1 => (
+                      <div key={l1} className="flex items-center justify-between bg-slate-50 px-3 py-2 rounded-lg group">
+                        <span className="text-xs font-bold text-slate-700">{l1} (一级)</span>
+                        <button 
+                          onClick={() => showConfirm('确认删除', `确定要删除一级类目 "${l1}" 及其下所有子类目吗？`, () => {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              delete next[l1];
+                              return next;
+                            });
+                          })}
+                          className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                    
+                    {/* L2s */}
+                    {Object.entries(categories).flatMap(([l1, l2s]: any) => 
+                      Object.keys(l2s).filter(l2 => l2.includes(mgmtCategorySearch)).map(l2 => ({ l1, l2 }))
+                    ).map(({ l1, l2 }) => (
+                      <div key={`${l1}-${l2}`} className="flex items-center justify-between bg-blue-50/50 px-3 py-2 rounded-lg group ml-4">
+                        <span className="text-xs text-slate-600">{l1} &gt; <span className="font-bold">{l2}</span> (二级)</span>
+                        <button 
+                          onClick={() => showConfirm('确认删除', `确定要删除二级类目 "${l1} > ${l2}" 及其下所有子类目吗？`, () => {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              delete next[l1][l2];
+                              return next;
+                            });
+                          })}
+                          className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* L3s */}
+                    {Object.entries(categories).flatMap(([l1, l2s]: any) => 
+                      Object.entries(l2s).flatMap(([l2, l3s]: any) => 
+                        Object.keys(l3s).filter(l3 => l3.includes(mgmtCategorySearch)).map(l3 => ({ l1, l2, l3 }))
+                      )
+                    ).map(({ l1, l2, l3 }) => (
+                      <div key={`${l1}-${l2}-${l3}`} className="flex items-center justify-between bg-indigo-50/50 px-3 py-2 rounded-lg group ml-8">
+                        <span className="text-xs text-slate-600">{l1} &gt; {l2} &gt; <span className="font-bold">{l3}</span> (三级)</span>
+                        <button 
+                          onClick={() => showConfirm('确认删除', `确定要删除三级类目 "${l1} > {l2} > ${l3}" 及其下所有子类目吗？`, () => {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              delete next[l1][l2][l3];
+                              return next;
+                            });
+                          })}
+                          className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+
+                    {/* L4s */}
+                    {Object.entries(categories).flatMap(([l1, l2s]: any) => 
+                      Object.entries(l2s).flatMap(([l2, l3s]: any) => 
+                        Object.entries(l3s).flatMap(([l3, l4s]: any) => 
+                          l4s.filter((l4: string) => l4.includes(mgmtCategorySearch)).map((l4: string) => ({ l1, l2, l3, l4 }))
+                        )
+                      )
+                    ).map(({ l1, l2, l3, l4 }) => (
+                      <div key={`${l1}-${l2}-${l3}-${l4}`} className="flex items-center justify-between bg-emerald-50/50 px-3 py-2 rounded-lg group ml-12">
+                        <span className="text-xs text-slate-600">{l1} &gt; {l2} &gt; {l3} &gt; <span className="font-bold text-emerald-700">{l4}</span> (四级)</span>
+                        <button 
+                          onClick={() => showConfirm('确认删除', `确定要删除四级类目 "${l1} > ${l2} > ${l3} > ${l4}" 吗？`, () => {
+                            setCategories(prev => {
+                              const next = { ...prev };
+                              next[l1][l2][l3] = next[l1][l2][l3].filter((item: string) => item !== l4);
+                              return next;
+                            });
+                          })}
+                          className="text-slate-400 hover:text-rose-500 transition-colors opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Add Platform */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Globe size={16} className="text-blue-500" />
+                  客户销售渠道管理
+                </h4>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="输入新渠道名称..."
+                    value={mgmtPlatformName}
+                    onChange={(e) => setMgmtPlatformName(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (mgmtPlatformName) {
+                        setPlatforms(prev => [...prev, mgmtPlatformName]);
+                        setMgmtPlatformName('');
+                      }
+                    }}
+                    className="bg-blue-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-blue-700 transition-colors"
+                  >
+                    添加渠道
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {platforms.map(platform => (
+                    <div key={platform} className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 group">
+                      <span>{platform}</span>
+                      <button 
+                        onClick={() => showConfirm('确认删除', `确定要删除渠道 "${platform}" 吗？`, () => {
+                          setPlatforms(prev => prev.filter(p => p !== platform));
+                        })}
+                        className="text-slate-400 hover:text-rose-500 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Add Distributor */}
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Users size={16} className="text-purple-500" />
+                  分销商管理
+                </h4>
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    placeholder="输入新分销商名称..."
+                    value={mgmtDistributorName}
+                    onChange={(e) => setMgmtDistributorName(e.target.value)}
+                    className="flex-1 px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                  <button 
+                    onClick={() => {
+                      if (mgmtDistributorName) {
+                        setDistributors(prev => [...prev, mgmtDistributorName]);
+                        setMgmtDistributorName('');
+                      }
+                    }}
+                    className="bg-purple-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-purple-700 transition-colors"
+                  >
+                    添加分销商
+                  </button>
+                </div>
+                <div className="flex flex-wrap gap-2">
+                  {distributors.map(distributor => (
+                    <div key={distributor} className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 group">
+                      <span>{distributor}</span>
+                      <button 
+                        onClick={() => showConfirm('确认删除', `确定要删除分销商 "${distributor}" 吗？`, () => {
+                          setDistributors(prev => prev.filter(d => d !== distributor));
+                        })}
+                        className="text-slate-400 hover:text-rose-500 transition-colors"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="space-y-4">
+                <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
+                  <Users size={16} className="text-orange-500" />
+                  岗位人员管理
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
+                  <select 
+                    value={mgmtPositionType}
+                    onChange={(e) => setMgmtPositionType(e.target.value)}
+                    className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none"
+                  >
+                    <option value="">选择岗位</option>
+                    <option value="业务">业务</option>
+                    <option value="销售">销售</option>
+                  </select>
+                  <input 
+                    type="text" 
+                    placeholder="输入人员姓名..."
+                    value={mgmtPersonnelName}
+                    onChange={(e) => setMgmtPersonnelName(e.target.value)}
+                    className="px-4 py-2 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 focus:ring-indigo-500/20"
+                  />
+                </div>
+                <button 
+                  onClick={() => {
+                    if (mgmtPositionType && mgmtPersonnelName) {
+                      setPositions(prev => ({
+                        ...prev,
+                        [mgmtPositionType]: [...prev[mgmtPositionType], mgmtPersonnelName]
+                      }));
+                      setMgmtPersonnelName('');
+                    }
+                  }}
+                  className="w-full bg-orange-600 text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-orange-700 transition-colors"
+                >
+                  添加人员
+                </button>
+                
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(positions).map(([type, names]: [string, any]) => (
+                    <div key={type} className="space-y-2">
+                      <p className="text-xs font-bold text-slate-500">{type}</p>
+                      <div className="flex flex-wrap gap-2">
+                        {names.map((name: string) => (
+                          <div key={name} className="flex items-center gap-2 bg-orange-50 px-2 py-1 rounded-lg text-xs font-medium text-orange-700">
+                            <span>{name}</span>
+                            <button 
+                              onClick={() => showConfirm('确认删除', `确定要删除人员 "${name}" 吗？`, () => {
+                                setPositions(prev => ({
+                                  ...prev,
+                                  [type]: prev[type].filter(n => n !== name)
+                                }));
+                              })}
+                              className="hover:text-rose-500"
+                            >
+                              <Trash2 size={12} />
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            <div className="p-6 bg-slate-50 border-t border-slate-100 flex justify-end shrink-0">
+              <button 
+                onClick={() => setIsManagementOpen(false)}
+                className="px-8 py-2.5 bg-white border border-slate-200 rounded-xl text-sm font-bold text-slate-700 hover:bg-slate-50 transition-all shadow-sm"
+              >
+                关闭管理后台
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Confirmation Dialog */}
+      {confirmDialog.isOpen && (
+        <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm z-[200] flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200">
+            <div className="p-6 space-y-4">
+              <div className="w-12 h-12 bg-rose-50 rounded-full flex items-center justify-center mx-auto text-rose-600">
+                <Trash2 size={24} />
+              </div>
+              <div className="text-center space-y-2">
+                <h3 className="text-lg font-bold text-slate-900">{confirmDialog.title}</h3>
+                <p className="text-sm text-slate-500">{confirmDialog.message}</p>
+              </div>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setConfirmDialog(prev => ({ ...prev, isOpen: false }))}
+                  className="flex-1 px-4 py-2 bg-slate-100 text-slate-700 rounded-xl text-sm font-bold hover:bg-slate-200 transition-colors"
+                >
+                  取消
+                </button>
+                <button 
+                  onClick={confirmDialog.onConfirm}
+                  className="flex-1 px-4 py-2 bg-rose-600 text-white rounded-xl text-sm font-bold hover:bg-rose-700 transition-colors shadow-lg shadow-rose-600/20"
+                >
+                  确认删除
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

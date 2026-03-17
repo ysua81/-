@@ -35,7 +35,7 @@ export interface SalesRecord {
   distributorId: string;
   storeName: string;
   platform: string;
-  isWholesale: '代发' | '批发' | '散户'; // 代批
+  isWholesale: '代发' | '批发' | '散户' | '定制'; // 代批
   date: string; // ISO string
   customerType: 'New' | 'Returning';
   categoryL1: string;
