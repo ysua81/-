@@ -1338,28 +1338,38 @@ export default function App() {
       const lastMonthStart = subMonths(thisMonthStart, 1);
       const lastYearThisMonthStart = subYears(thisMonthStart, 1);
 
+      // New metrics for the specific columns requested
+      const lastWeekMetrics = getMetricsInRange(subset, lastWeekStart, thisWeekStart);
+      const thisWeekMetrics = getMetricsInRange(subset, thisWeekStart, now);
+      const lastMonthMetrics = getMetricsInRange(subset, lastMonthStart, thisMonthStart);
+      const thisMonthMetrics = getMetricsInRange(subset, thisMonthStart, now);
+
       if (timeRange === '昨天') {
         currentPeriodSales = getMetricsInRange(subset, yesterday, today).sales;
         previousPeriodSales = getMetricsInRange(subset, dayBeforeYesterday, yesterday).sales;
         lastYearPeriodSales = getMetricsInRange(subset, lastYearYesterday, lastYearToday).sales;
       } else if (timeRange === '本周') {
-        currentPeriodSales = getMetricsInRange(subset, thisWeekStart, now).sales;
-        previousPeriodSales = getMetricsInRange(subset, lastWeekStart, thisWeekStart).sales;
+        currentPeriodSales = thisWeekMetrics.sales;
+        previousPeriodSales = lastWeekMetrics.sales;
         lastYearPeriodSales = getMetricsInRange(subset, lastYearThisWeekStart, subYears(now, 1)).sales;
       } else if (timeRange === '本月') {
-        currentPeriodSales = getMetricsInRange(subset, thisMonthStart, now).sales;
-        previousPeriodSales = getMetricsInRange(subset, lastMonthStart, thisMonthStart).sales;
+        currentPeriodSales = thisMonthMetrics.sales;
+        previousPeriodSales = lastMonthMetrics.sales;
         lastYearPeriodSales = getMetricsInRange(subset, lastYearThisMonthStart, subYears(now, 1)).sales;
       } else {
         // 自定义 or default
         currentPeriodSales = subset.reduce((sum, d) => sum + d[selectedMetric], 0);
-        previousPeriodSales = 0; // Hard to define for custom
+        previousPeriodSales = 0; 
         lastYearPeriodSales = 0;
       }
 
       return {
         salesAmount: subset.reduce((sum, d) => sum + d.salesAmount, 0),
         salesVolume: subset.reduce((sum, d) => sum + d.salesVolume, 0),
+        lastWeekSales: lastWeekMetrics.sales,
+        thisWeekMargin: thisWeekMetrics.margin,
+        lastMonthSales: lastMonthMetrics.sales,
+        thisMonthMargin: thisMonthMetrics.margin,
         wow: previousPeriodSales === 0 ? 0 : ((currentPeriodSales - previousPeriodSales) / previousPeriodSales) * 100,
         yoy: lastYearPeriodSales === 0 ? 0 : ((currentPeriodSales - lastYearPeriodSales) / lastYearPeriodSales) * 100,
         total: subset.reduce((sum, d) => sum + d[selectedMetric], 0),
@@ -2197,14 +2207,18 @@ export default function App() {
                       <SortableHeader label="维度 / 细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
                       <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
                       <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="环比" sortKey="wow" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="上周销售" sortKey="lastWeekSales" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="本周利润率" sortKey="thisWeekMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="上月销售" sortKey="lastMonthSales" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="本月利润率" sortKey="thisMonthMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
                       <SortableHeader label="同比" sortKey="yoy" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="环比" sortKey="wow" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
                     {dimensionMetrics.length === 0 ? (
                       <tr>
-                        <td colSpan={14} className="px-6 py-24 text-center">
+                        <td colSpan={9} className="px-6 py-24 text-center">
                           <div className="flex flex-col items-center gap-4 text-slate-400">
                             <div className="p-4 bg-slate-50 rounded-full">
                               <Filter size={32} className="opacity-30" />
@@ -2227,7 +2241,7 @@ export default function App() {
                         <React.Fragment key={dim.id}>
                           {/* Dimension Header Row */}
                           <tr className="bg-slate-50/50">
-                            <td colSpan={14} className="px-6 py-3">
+                            <td colSpan={9} className="px-6 py-3">
                               <div className="flex items-center gap-2">
                                 <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
                                 <span className="font-bold text-slate-900 text-sm">{dim.label} 明细</span>
@@ -2264,11 +2278,23 @@ export default function App() {
                                 <td className="px-6 py-4 text-right">
                                   <span className="text-xs font-medium text-slate-600">{(item.metrics as any).salesVolume.toLocaleString()}</span>
                                 </td>
+                                <td className="px-6 py-4 text-right">
+                                  <span className="text-xs font-medium text-slate-500">¥{(item.metrics as any).lastWeekSales.toLocaleString()}</span>
+                                </td>
                                 <td className="px-6 py-4 text-center">
-                                  <CompactGrowth value={item.metrics.wow} />
+                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).thisWeekMargin.toFixed(1)}%</span>
+                                </td>
+                                <td className="px-6 py-4 text-right">
+                                  <span className="text-xs font-medium text-slate-500">¥{(item.metrics as any).lastMonthSales.toLocaleString()}</span>
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).thisMonthMargin.toFixed(1)}%</span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
                                   <CompactGrowth value={item.metrics.yoy} />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <CompactGrowth value={item.metrics.wow} />
                                 </td>
                               </tr>
                             );
