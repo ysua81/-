@@ -33,33 +33,40 @@ const SortableHeader = ({
   sortKey, 
   currentSort, 
   onSort, 
-  align = 'left' 
+  align = 'left',
+  className = ""
 }: { 
   label: string; 
   sortKey: string; 
   currentSort: { key: string; direction: 'asc' | 'desc' } | null; 
   onSort: (key: any) => void;
   align?: 'left' | 'right' | 'center';
+  className?: string;
 }) => {
   const isActive = currentSort?.key === sortKey;
   
   return (
-    <div 
+    <th 
       className={cn(
-        "px-4 py-3 cursor-pointer hover:bg-slate-100/50 transition-colors group select-none flex items-center gap-1", 
-        align === 'right' ? 'justify-end text-right' : align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
+        "p-0 cursor-pointer hover:bg-slate-100/50 transition-colors group select-none", 
+        className
       )} 
       onClick={() => onSort(sortKey)}
     >
-      {align === 'center' && sortKey !== 'id' && <div className="w-[10px]" />}
-      <span>{label}</span>
-      {sortKey !== 'id' && (
-        <div className="flex flex-col -space-y-1">
-          <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-          <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-        </div>
-      )}
-    </div>
+      <div className={cn(
+        "px-4 py-3 flex items-center gap-1", 
+        align === 'right' ? 'justify-end text-right' : align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
+      )}>
+        {align === 'center' && sortKey !== 'id' && <div className="w-[10px]" />}
+        <span>{label}</span>
+        {sortKey !== 'id' && (
+          <div className="flex flex-col -space-y-1">
+            <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+            <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+          </div>
+        )}
+      </div>
+    </th>
   );
 };
 
@@ -2086,30 +2093,14 @@ export default function App() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
-                      <th className="border-r border-slate-300 bg-slate-100/50 p-0">
-                        <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
-                      </th>
-                      <th className="bg-indigo-50/30 p-0">
-                        <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      </th>
-                      <th className="bg-indigo-50/30 p-0">
-                        <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      </th>
-                      <th className="border-r border-slate-300 bg-indigo-50/30 p-0">
-                        <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      </th>
-                      <th className="bg-emerald-50/20 p-0">
-                        <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      </th>
-                      <th className="bg-emerald-50/20 p-0">
-                        <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      </th>
-                      <th className="border-r border-slate-300 bg-emerald-50/20 p-0">
-                        <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      </th>
-                      <th className="bg-slate-50 p-0">
-                        <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      </th>
+                      <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} className="border-r border-slate-300 bg-slate-100/50" />
+                      <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" className="bg-indigo-50/30" />
+                      <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-indigo-50/30" />
+                      <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-indigo-50/30" />
+                      <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" className="bg-emerald-50/20" />
+                      <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-emerald-50/20" />
+                      <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-emerald-50/20" />
+                      <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-slate-50" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-200">
@@ -2169,7 +2160,7 @@ export default function App() {
                                   <CompactGrowth value={(item.metrics as any).salesAmountYoY} diff={(item.metrics as any).salesAmountYoYDiff} prefix="¥" />
                                 </td>
                                 <td className="px-4 py-3 text-right bg-emerald-50/5">
-                                  <span className="text-xs font-medium text-slate-600">{(item.metrics as any).salesVolume.toLocaleString()}</span>
+                                  <span className="text-xs font-bold text-slate-900">{(item.metrics as any).salesVolume.toLocaleString()}</span>
                                 </td>
                                 <td className="px-4 py-3 text-center bg-emerald-50/5">
                                   <CompactGrowth value={(item.metrics as any).salesVolumeWoW} diff={(item.metrics as any).salesVolumeWoWDiff} />
@@ -2178,7 +2169,7 @@ export default function App() {
                                   <CompactGrowth value={(item.metrics as any).salesVolumeYoY} diff={(item.metrics as any).salesVolumeYoYDiff} />
                                 </td>
                                 <td className="px-4 py-3 text-center bg-slate-50/20">
-                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).margin.toFixed(1)}%</span>
+                                  <span className="text-xs font-bold text-slate-900">{(item.metrics as any).margin.toFixed(1)}%</span>
                                 </td>
                               </tr>
                             );
@@ -3182,16 +3173,15 @@ function CompactGrowth({ value, diff, prefix = "" }: { value: number, diff?: num
   const colorClass = isPositive ? "text-rose-600" : "text-emerald-600";
   
   return (
-    <div className="flex flex-col items-center justify-center py-1">
+    <div className="flex items-center justify-center gap-1.5 py-1">
       {diff !== undefined && (
-        <span className="text-xs font-bold text-slate-700 mb-0.5">
+        <span className="text-xs font-bold text-slate-800">
           {isPositive ? '+' : ''}{prefix}{diff.toLocaleString()}
         </span>
       )}
-      <div className={cn("flex items-center gap-0.5 text-xs font-bold", colorClass)}>
-        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+      <div className={cn("flex items-center gap-0.5 text-[10px] font-bold", colorClass)}>
+        {isPositive ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
         <span>{isPositive ? '+' : ''}{value.toFixed(1)}%</span>
-        <div className="w-3" />
       </div>
     </div>
   );

@@ -278,14 +278,38 @@ export const generateCompetitiveData = (count: number = 50): CompetitiveProduct[
   return data;
 };
 
-export const generateMockData = (count: number = 500): SalesRecord[] => {
+export const generateMockData = (count: number = 1200): SalesRecord[] => {
   const data: SalesRecord[] = [];
   const now = new Date();
 
+  // Define some trends for different categories to ensure variety in growth/decline
+  const categoryTrends: Record<string, number> = {
+    '办公': 1.2,    // Growing
+    '产品配件': 0.8, // Declining
+    '户外': 1.5,    // Strong growth
+    '家居': 0.7,    // Strong decline
+    '圈类': 1.0,    // Stable
+    '玩具': 1.1,    // Slight growth
+    '浴盆': 0.9     // Slight decline
+  };
+
   for (let i = 0; i < count; i++) {
-    const date = subDays(now, Math.floor(Math.random() * 400)); // Last 400 days
+    const daysAgo = Math.floor(Math.random() * 400);
+    const date = subDays(now, daysAgo);
     const cat = categoryTree[Math.floor(Math.random() * categoryTree.length)];
-    const amount = Math.floor(Math.random() * 1000) + 100;
+    
+    // Apply trend: newer records have higher/lower amounts based on trend factor
+    const trendFactor = categoryTrends[cat.l1] || 1.0;
+    // Simple linear trend: factor ^ (1 - daysAgo/400)
+    // If trend > 1, newer (daysAgo small) will be larger.
+    // If trend < 1, newer will be smaller.
+    const timeWeight = Math.pow(trendFactor, (400 - daysAgo) / 400);
+    
+    const baseAmount = Math.floor(Math.random() * 1000) + 100;
+    const amount = Math.floor(baseAmount * timeWeight);
+    
+    const baseVolume = Math.floor(Math.random() * 20) + 1;
+    const volume = Math.max(1, Math.floor(baseVolume * timeWeight));
     
     data.push({
       id: `rec_${i}`,
@@ -300,7 +324,7 @@ export const generateMockData = (count: number = 500): SalesRecord[] => {
       categoryL3: cat.l3,
       categoryL4: cat.l4,
       salesAmount: amount,
-      salesVolume: Math.floor(Math.random() * 20) + 1,
+      salesVolume: volume,
       costAmount: amount * (0.6 + Math.random() * 0.2), // 60-80% cost
       businessOwner: businessOwners[Math.floor(Math.random() * businessOwners.length)],
       salesperson: salespeople[Math.floor(Math.random() * salespeople.length)],
