@@ -44,23 +44,22 @@ const SortableHeader = ({
   const isActive = currentSort?.key === sortKey;
   
   return (
-    <th 
+    <div 
       className={cn(
-        "px-4 py-4 cursor-pointer hover:bg-slate-50 transition-colors group select-none", 
-        align === 'right' ? 'text-right' : align === 'center' ? 'text-center' : 'text-left'
+        "px-4 py-3 cursor-pointer hover:bg-slate-100/50 transition-colors group select-none flex items-center gap-1", 
+        align === 'right' ? 'justify-end text-right' : align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
       )} 
       onClick={() => onSort(sortKey)}
     >
-      <div className={cn("flex items-center gap-1", align === 'right' ? 'justify-end' : align === 'center' ? 'justify-center' : 'justify-start')}>
-        <span>{label}</span>
-        {sortKey !== 'id' && (
-          <div className="flex flex-col -space-y-1">
-            <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-            <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
-          </div>
-        )}
-      </div>
-    </th>
+      {align === 'center' && sortKey !== 'id' && <div className="w-[10px]" />}
+      <span>{label}</span>
+      {sortKey !== 'id' && (
+        <div className="flex flex-col -space-y-1">
+          <ChevronUp size={10} className={cn(isActive && currentSort?.direction === 'asc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+          <ChevronDown size={10} className={cn(isActive && currentSort?.direction === 'desc' ? "text-orange-500" : "text-slate-300 group-hover:text-slate-400")} />
+        </div>
+      )}
+    </div>
   );
 };
 
@@ -2078,23 +2077,45 @@ export default function App() {
               </div>
               
               <div className="overflow-x-auto rounded-b-2xl">
+                {dimensionMetrics.length > 0 && (
+                  <div className="px-6 py-4 bg-white border-b border-slate-300 flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full bg-indigo-600 shadow-[0_0_8px_rgba(79,70,229,0.4)]" />
+                    <span className="font-bold text-slate-900 text-sm">{dimensionMetrics[0].label} 明细数据</span>
+                  </div>
+                )}
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
-                      <SortableHeader label="维度 / 细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
-                      <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                    <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
+                      <th className="border-r border-slate-300 bg-slate-100/50 p-0">
+                        <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
+                      </th>
+                      <th className="bg-indigo-50/30 p-0">
+                        <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      </th>
+                      <th className="bg-indigo-50/30 p-0">
+                        <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      </th>
+                      <th className="border-r border-slate-300 bg-indigo-50/30 p-0">
+                        <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      </th>
+                      <th className="bg-emerald-50/20 p-0">
+                        <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      </th>
+                      <th className="bg-emerald-50/20 p-0">
+                        <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      </th>
+                      <th className="border-r border-slate-300 bg-emerald-50/20 p-0">
+                        <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      </th>
+                      <th className="bg-slate-50 p-0">
+                        <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      </th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-100">
+                  <tbody className="divide-y divide-slate-200">
                     {dimensionMetrics.length === 0 ? (
                       <tr>
-                        <td colSpan={9} className="px-6 py-24 text-center">
+                        <td colSpan={8} className="px-6 py-24 text-center">
                           <div className="flex flex-col items-center gap-4 text-slate-400">
                             <div className="p-4 bg-slate-50 rounded-full">
                               <Filter size={32} className="opacity-30" />
@@ -2115,16 +2136,6 @@ export default function App() {
 
                       return (
                         <React.Fragment key={dim.id}>
-                          {/* Dimension Header Row */}
-                          <tr className="bg-slate-50/50">
-                            <td colSpan={9} className="px-6 py-3">
-                              <div className="flex items-center gap-2">
-                                <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                                <span className="font-bold text-slate-900 text-sm">{dim.label} 明细</span>
-                              </div>
-                            </td>
-                          </tr>
-                          
                           {/* Breakdown Rows */}
                           {filteredBreakdown?.map((item) => {
                             const isSelected = selectedFilterValue === item.id;
@@ -2133,11 +2144,11 @@ export default function App() {
                                 key={item.id}
                                 onClick={() => setSelectedFilterValue(isSelected ? null : item.id)}
                                 className={cn(
-                                  "group transition-all cursor-pointer border-b border-slate-50 last:border-0",
-                                  isSelected ? "bg-indigo-50/80" : "hover:bg-indigo-50/30"
+                                  "group transition-all cursor-pointer border-b border-slate-100 last:border-0",
+                                  isSelected ? "bg-indigo-50/80" : "hover:bg-slate-50"
                                 )}
                               >
-                                <td className="px-6 py-4">
+                                <td className="px-4 py-3 border-r border-slate-300 bg-slate-50/30">
                                   <div className="flex items-center gap-3">
                                     {isSelected && <div className="w-1 h-4 bg-indigo-500 rounded-full" />}
                                     <span className={cn(
@@ -2148,25 +2159,25 @@ export default function App() {
                                     </span>
                                   </div>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-4 py-3 text-right bg-indigo-50/10">
                                   <span className="text-xs font-bold text-slate-900">¥{(item.metrics as any).salesAmount.toLocaleString()}</span>
                                 </td>
-                                <td className="px-6 py-4 text-center">
-                                  <CompactGrowth value={(item.metrics as any).salesAmountYoY} diff={(item.metrics as any).salesAmountYoYDiff} prefix="¥" />
-                                </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 text-center bg-indigo-50/10">
                                   <CompactGrowth value={(item.metrics as any).salesAmountWoW} diff={(item.metrics as any).salesAmountWoWDiff} prefix="¥" />
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-4 py-3 text-center border-r border-slate-300 bg-indigo-50/10">
+                                  <CompactGrowth value={(item.metrics as any).salesAmountYoY} diff={(item.metrics as any).salesAmountYoYDiff} prefix="¥" />
+                                </td>
+                                <td className="px-4 py-3 text-right bg-emerald-50/5">
                                   <span className="text-xs font-medium text-slate-600">{(item.metrics as any).salesVolume.toLocaleString()}</span>
                                 </td>
-                                <td className="px-6 py-4 text-center">
-                                  <CompactGrowth value={(item.metrics as any).salesVolumeYoY} diff={(item.metrics as any).salesVolumeYoYDiff} />
-                                </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 text-center bg-emerald-50/5">
                                   <CompactGrowth value={(item.metrics as any).salesVolumeWoW} diff={(item.metrics as any).salesVolumeWoWDiff} />
                                 </td>
-                                <td className="px-6 py-4 text-center">
+                                <td className="px-4 py-3 text-center border-r border-slate-300 bg-emerald-50/5">
+                                  <CompactGrowth value={(item.metrics as any).salesVolumeYoY} diff={(item.metrics as any).salesVolumeYoYDiff} />
+                                </td>
+                                <td className="px-4 py-3 text-center bg-slate-50/20">
                                   <span className="text-xs font-bold text-slate-600">{(item.metrics as any).margin.toFixed(1)}%</span>
                                 </td>
                               </tr>
@@ -3168,23 +3179,20 @@ function DimensionModule({ title, selection, metrics, breakdown, onSelect }: Dim
 
 function CompactGrowth({ value, diff, prefix = "" }: { value: number, diff?: number, prefix?: string }) {
   const isPositive = value >= 0;
+  const colorClass = isPositive ? "text-rose-600" : "text-emerald-600";
+  
   return (
-    <div className="flex flex-col items-center gap-1">
-      <div className={cn(
-        "inline-flex items-center gap-1 px-2 py-1 rounded-md font-bold text-xs",
-        isPositive ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"
-      )}>
-        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-        {isPositive ? '+' : ''}{value.toFixed(1)}%
-      </div>
+    <div className="flex flex-col items-center justify-center py-1">
       {diff !== undefined && (
-        <span className={cn(
-          "text-[10px] font-medium",
-          isPositive ? "text-emerald-600" : "text-rose-600"
-        )}>
+        <span className="text-xs font-bold text-slate-700 mb-0.5">
           {isPositive ? '+' : ''}{prefix}{diff.toLocaleString()}
         </span>
       )}
+      <div className={cn("flex items-center gap-0.5 text-xs font-bold", colorClass)}>
+        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        <span>{isPositive ? '+' : ''}{value.toFixed(1)}%</span>
+        <div className="w-3" />
+      </div>
     </div>
   );
 }
