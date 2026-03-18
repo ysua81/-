@@ -252,7 +252,7 @@ export default function StrategicMap() {
   };
 
   return (
-    <main className="p-8 space-y-6 max-w-[1600px] mx-auto w-full bg-slate-50/50 min-h-screen">
+    <main className="p-8 space-y-6 w-full bg-slate-50/50 min-h-screen">
       {/* Header */}
       <div className="flex items-center gap-4">
         <h2 className="text-2xl font-bold text-slate-900">战略地图</h2>

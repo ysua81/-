@@ -1599,7 +1599,7 @@ export default function App() {
         </header>
 
         {activeMenu === '销售数据分析' ? (
-          <main className="p-8 space-y-8 max-w-[1600px] mx-auto w-full">
+          <main className="p-8 space-y-8 w-full">
             {/* Single Dimension Selector Bar */}
             <section className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-4">
               <div className="flex items-center gap-3 shrink-0">
@@ -1945,139 +1945,7 @@ export default function App() {
                   </button>
                 )}
               </div>
-
-              <div className="flex items-center gap-2 text-xs text-slate-400 italic">
-                <span>* 筛选细分项将同步更新趋势图与KPI</span>
-              </div>
             </section>
-
-            {/* KPI Cards */}
-            <section className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-              <MetricCard 
-                title={selectedMetric === 'salesAmount' ? "总销售额" : "总销量"} 
-                value={selectedMetric === 'salesAmount' ? `¥${metrics.total.toLocaleString()}` : metrics.total.toLocaleString()} 
-                trend={metrics.wow >= 0 ? 'up' : 'down'} 
-                icon={<ShoppingBag className="text-indigo-600" size={18} />}
-              />
-              <MetricCard 
-                title="订单总量" 
-                value={data.length.toLocaleString()} 
-                trend={metrics.mom >= 0 ? 'up' : 'down'} 
-                icon={<LayoutDashboard className="text-emerald-600" size={18} />}
-              />
-              <MetricCard 
-                title="活跃客户数" 
-                value={new Set(data.map(d => d.distributorId)).size.toLocaleString()} 
-                trend={metrics.wow < 0 ? 'up' : 'down'} 
-                icon={<Users className="text-amber-600" size={18} />}
-              />
-              <MetricCard 
-                title="平均客单价" 
-                value={`¥${Math.floor(metrics.total / (data.length || 1))}`} 
-                trend={metrics.yoy >= 0 ? 'up' : 'down'} 
-                icon={<TrendingUp className="text-rose-600" size={18} />}
-              />
-            </section>
-
-            {/* Trend Charts Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">本周趋势增长曲线</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">展示本周每日{selectedMetric === 'salesAmount' ? '销售额' : '销量'}波动情况</p>
-                  </div>
-                  <div className="px-2 py-1 bg-indigo-50 rounded text-[10px] font-bold text-indigo-600">
-                    WEEKLY TREND
-                  </div>
-                </div>
-                <div className="h-[160px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trendData.weeklyTrend}>
-                      <defs>
-                        <linearGradient id="colorWeekly" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#6366f1" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="date" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fontSize: 10, fill: '#94a3b8'}}
-                        dy={10}
-                      />
-                      <YAxis 
-                        hide 
-                      />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        formatter={(value: number) => [selectedMetric === 'salesAmount' ? `¥${value.toLocaleString()}` : value.toLocaleString(), selectedMetric === 'salesAmount' ? '销售额' : '销量']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="sales" 
-                        stroke="#6366f1" 
-                        strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorWeekly)" 
-                        animationDuration={1500}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="text-sm font-bold text-slate-900">本月趋势增长曲线</h3>
-                    <p className="text-[10px] text-slate-400 mt-0.5">展示本月每日{selectedMetric === 'salesAmount' ? '销售额' : '销量'}波动情况</p>
-                  </div>
-                  <div className="px-2 py-1 bg-emerald-50 rounded text-[10px] font-bold text-emerald-600">
-                    MONTHLY TREND
-                  </div>
-                </div>
-                <div className="h-[160px] w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <AreaChart data={trendData.monthlyTrend}>
-                      <defs>
-                        <linearGradient id="colorMonthly" x1="0" y1="0" x2="0" y2="1">
-                          <stop offset="5%" stopColor="#10b981" stopOpacity={0.1}/>
-                          <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
-                        </linearGradient>
-                      </defs>
-                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                      <XAxis 
-                        dataKey="date" 
-                        axisLine={false} 
-                        tickLine={false} 
-                        tick={{fontSize: 10, fill: '#94a3b8'}}
-                        dy={10}
-                        interval={2}
-                      />
-                      <YAxis 
-                        hide 
-                      />
-                      <Tooltip 
-                        contentStyle={{ borderRadius: '12px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                        formatter={(value: number) => [selectedMetric === 'salesAmount' ? `¥${value.toLocaleString()}` : value.toLocaleString(), selectedMetric === 'salesAmount' ? '销售额' : '销量']}
-                      />
-                      <Area 
-                        type="monotone" 
-                        dataKey="sales" 
-                        stroke="#10b981" 
-                        strokeWidth={3}
-                        fillOpacity={1} 
-                        fill="url(#colorMonthly)" 
-                        animationDuration={1500}
-                      />
-                    </AreaChart>
-                  </ResponsiveContainer>
-                </div>
-              </div>
-            </div>
 
             {/* Unified Dimension Table */}
             <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
@@ -2308,7 +2176,7 @@ export default function App() {
             </div>
           </main>
         ) : activeMenu === '竞品分析' ? (
-          <main className="p-8 space-y-6 max-w-[1600px] mx-auto w-full">
+          <main className="p-8 space-y-6 w-full">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-4">
                 <h2 className="text-2xl font-bold text-slate-900">竞品分析</h2>
