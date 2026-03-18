@@ -1320,10 +1320,6 @@ export default function App() {
     };
 
     const calculateGrowth = (subset: SalesRecord[]) => {
-      let currentPeriodSales = 0;
-      let previousPeriodSales = 0;
-      let lastYearPeriodSales = 0;
-
       const today = startOfDay(now);
       const yesterday = subDays(today, 1);
       const dayBeforeYesterday = subDays(today, 2);
@@ -1338,40 +1334,53 @@ export default function App() {
       const lastMonthStart = subMonths(thisMonthStart, 1);
       const lastYearThisMonthStart = subYears(thisMonthStart, 1);
 
-      // New metrics for the specific columns requested
-      const lastWeekMetrics = getMetricsInRange(subset, lastWeekStart, thisWeekStart);
-      const thisWeekMetrics = getMetricsInRange(subset, thisWeekStart, now);
-      const lastMonthMetrics = getMetricsInRange(subset, lastMonthStart, thisMonthStart);
-      const thisMonthMetrics = getMetricsInRange(subset, thisMonthStart, now);
+      const getDetailedMetrics = (start: Date, end: Date) => {
+        const filtered = subset.filter(d => isWithinInterval(parseISO(d.date), { start, end }));
+        const salesAmount = filtered.reduce((sum, d) => sum + d.salesAmount, 0);
+        const salesVolume = filtered.reduce((sum, d) => sum + d.salesVolume, 0);
+        const costAmount = filtered.reduce((sum, d) => sum + d.costAmount, 0);
+        const margin = salesAmount === 0 ? 0 : ((salesAmount - costAmount) / salesAmount) * 100;
+        return { salesAmount, salesVolume, margin };
+      };
+
+      let current, previous, lastYear;
 
       if (timeRange === '昨天') {
-        currentPeriodSales = getMetricsInRange(subset, yesterday, today).sales;
-        previousPeriodSales = getMetricsInRange(subset, dayBeforeYesterday, yesterday).sales;
-        lastYearPeriodSales = getMetricsInRange(subset, lastYearYesterday, lastYearToday).sales;
+        current = getDetailedMetrics(yesterday, today);
+        previous = getDetailedMetrics(dayBeforeYesterday, yesterday);
+        lastYear = getDetailedMetrics(lastYearYesterday, lastYearToday);
       } else if (timeRange === '本周') {
-        currentPeriodSales = thisWeekMetrics.sales;
-        previousPeriodSales = lastWeekMetrics.sales;
-        lastYearPeriodSales = getMetricsInRange(subset, lastYearThisWeekStart, subYears(now, 1)).sales;
+        current = getDetailedMetrics(thisWeekStart, now);
+        previous = getDetailedMetrics(lastWeekStart, thisWeekStart);
+        lastYear = getDetailedMetrics(lastYearThisWeekStart, subYears(now, 1));
       } else if (timeRange === '本月') {
-        currentPeriodSales = thisMonthMetrics.sales;
-        previousPeriodSales = lastMonthMetrics.sales;
-        lastYearPeriodSales = getMetricsInRange(subset, lastYearThisMonthStart, subYears(now, 1)).sales;
+        current = getDetailedMetrics(thisMonthStart, now);
+        previous = getDetailedMetrics(lastMonthStart, thisMonthStart);
+        lastYear = getDetailedMetrics(lastYearThisMonthStart, subYears(now, 1));
       } else {
-        // 自定义 or default
-        currentPeriodSales = subset.reduce((sum, d) => sum + d[selectedMetric], 0);
-        previousPeriodSales = 0; 
-        lastYearPeriodSales = 0;
+        // Default to last 30 days vs previous 30 days
+        current = getDetailedMetrics(subDays(now, 30), now);
+        previous = getDetailedMetrics(subDays(now, 60), subDays(now, 30));
+        lastYear = getDetailedMetrics(subYears(subDays(now, 30), 1), subYears(now, 1));
       }
 
+      const calcGrowth = (curr: number, prev: number) => prev === 0 ? 0 : ((curr - prev) / prev) * 100;
+
       return {
-        salesAmount: subset.reduce((sum, d) => sum + d.salesAmount, 0),
-        salesVolume: subset.reduce((sum, d) => sum + d.salesVolume, 0),
-        lastWeekSales: lastWeekMetrics.sales,
-        thisWeekMargin: thisWeekMetrics.margin,
-        lastMonthSales: lastMonthMetrics.sales,
-        thisMonthMargin: thisMonthMetrics.margin,
-        wow: previousPeriodSales === 0 ? 0 : ((currentPeriodSales - previousPeriodSales) / previousPeriodSales) * 100,
-        yoy: lastYearPeriodSales === 0 ? 0 : ((currentPeriodSales - lastYearPeriodSales) / lastYearPeriodSales) * 100,
+        salesAmount: current.salesAmount,
+        salesAmountYoY: calcGrowth(current.salesAmount, lastYear.salesAmount),
+        salesAmountYoYDiff: current.salesAmount - lastYear.salesAmount,
+        salesAmountWoW: calcGrowth(current.salesAmount, previous.salesAmount),
+        salesAmountWoWDiff: current.salesAmount - previous.salesAmount,
+        salesVolume: current.salesVolume,
+        salesVolumeYoY: calcGrowth(current.salesVolume, lastYear.salesVolume),
+        salesVolumeYoYDiff: current.salesVolume - lastYear.salesVolume,
+        salesVolumeWoW: calcGrowth(current.salesVolume, previous.salesVolume),
+        salesVolumeWoWDiff: current.salesVolume - previous.salesVolume,
+        margin: current.margin,
+        // Compatibility keys
+        yoy: calcGrowth(current[selectedMetric === 'salesAmount' ? 'salesAmount' : 'salesVolume'], lastYear[selectedMetric === 'salesAmount' ? 'salesAmount' : 'salesVolume']),
+        wow: calcGrowth(current[selectedMetric === 'salesAmount' ? 'salesAmount' : 'salesVolume'], previous[selectedMetric === 'salesAmount' ? 'salesAmount' : 'salesVolume']),
         total: subset.reduce((sum, d) => sum + d[selectedMetric], 0),
       };
     };
@@ -1948,8 +1957,8 @@ export default function App() {
             </section>
 
             {/* Unified Dimension Table */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <div className="p-6 border-b border-slate-100 bg-slate-50/30 flex items-center justify-between rounded-t-2xl">
                 <div>
                   <h2 className="text-lg font-bold text-slate-900">维度增长看板</h2>
                   <p className="text-xs text-slate-500 mt-1">按不同维度查看各指标的同比增长情况（展示各维度{selectedMetric === 'salesAmount' ? '销售额' : '销量'}前5名）</p>
@@ -2068,19 +2077,18 @@ export default function App() {
 
               </div>
               
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-b-2xl">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-200">
                       <SortableHeader label="维度 / 细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} />
                       <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
+                      <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
                       <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="上周销售" sortKey="lastWeekSales" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="本周利润率" sortKey="thisWeekMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="上月销售" sortKey="lastMonthSales" currentSort={tableSortConfig} onSort={handleTableSort} align="right" />
-                      <SortableHeader label="本月利润率" sortKey="thisMonthMargin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="同比" sortKey="yoy" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
-                      <SortableHeader label="环比" sortKey="wow" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
+                      <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" />
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-slate-100">
@@ -2143,26 +2151,23 @@ export default function App() {
                                 <td className="px-6 py-4 text-right">
                                   <span className="text-xs font-bold text-slate-900">¥{(item.metrics as any).salesAmount.toLocaleString()}</span>
                                 </td>
+                                <td className="px-6 py-4 text-center">
+                                  <CompactGrowth value={(item.metrics as any).salesAmountYoY} diff={(item.metrics as any).salesAmountYoYDiff} prefix="¥" />
+                                </td>
+                                <td className="px-6 py-4 text-center">
+                                  <CompactGrowth value={(item.metrics as any).salesAmountWoW} diff={(item.metrics as any).salesAmountWoWDiff} prefix="¥" />
+                                </td>
                                 <td className="px-6 py-4 text-right">
                                   <span className="text-xs font-medium text-slate-600">{(item.metrics as any).salesVolume.toLocaleString()}</span>
                                 </td>
-                                <td className="px-6 py-4 text-right">
-                                  <span className="text-xs font-medium text-slate-500">¥{(item.metrics as any).lastWeekSales.toLocaleString()}</span>
+                                <td className="px-6 py-4 text-center">
+                                  <CompactGrowth value={(item.metrics as any).salesVolumeYoY} diff={(item.metrics as any).salesVolumeYoYDiff} />
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).thisWeekMargin.toFixed(1)}%</span>
-                                </td>
-                                <td className="px-6 py-4 text-right">
-                                  <span className="text-xs font-medium text-slate-500">¥{(item.metrics as any).lastMonthSales.toLocaleString()}</span>
+                                  <CompactGrowth value={(item.metrics as any).salesVolumeWoW} diff={(item.metrics as any).salesVolumeWoWDiff} />
                                 </td>
                                 <td className="px-6 py-4 text-center">
-                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).thisMonthMargin.toFixed(1)}%</span>
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                  <CompactGrowth value={item.metrics.yoy} />
-                                </td>
-                                <td className="px-6 py-4 text-center">
-                                  <CompactGrowth value={item.metrics.wow} />
+                                  <span className="text-xs font-bold text-slate-600">{(item.metrics as any).margin.toFixed(1)}%</span>
                                 </td>
                               </tr>
                             );
@@ -2299,8 +2304,8 @@ export default function App() {
             </div>
 
             {/* List Content */}
-            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-              <div className="p-6 border-b border-slate-100 flex items-center justify-between">
+            <div className="bg-white rounded-2xl border border-slate-200 shadow-sm">
+              <div className="p-6 border-b border-slate-100 flex items-center justify-between rounded-t-2xl">
                 <h3 className="font-bold text-slate-900">{rankingType} - {productFilter}</h3>
                 <div className="flex items-center gap-2">
                   <span className="text-xs text-slate-400">排序依据: </span>
@@ -2314,7 +2319,7 @@ export default function App() {
                 </div>
               </div>
               
-              <div className="overflow-x-auto">
+              <div className="overflow-x-auto rounded-b-2xl">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-white text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
@@ -3161,15 +3166,25 @@ function DimensionModule({ title, selection, metrics, breakdown, onSelect }: Dim
   );
 }
 
-function CompactGrowth({ value }: { value: number }) {
+function CompactGrowth({ value, diff, prefix = "" }: { value: number, diff?: number, prefix?: string }) {
   const isPositive = value >= 0;
   return (
-    <div className={cn(
-      "inline-flex items-center gap-1 px-2 py-1 rounded-md font-bold text-xs",
-      isPositive ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"
-    )}>
-      {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
-      {isPositive ? '+' : ''}{value.toFixed(1)}%
+    <div className="flex flex-col items-center gap-1">
+      <div className={cn(
+        "inline-flex items-center gap-1 px-2 py-1 rounded-md font-bold text-xs",
+        isPositive ? "text-emerald-700 bg-emerald-50" : "text-rose-700 bg-rose-50"
+      )}>
+        {isPositive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+        {isPositive ? '+' : ''}{value.toFixed(1)}%
+      </div>
+      {diff !== undefined && (
+        <span className={cn(
+          "text-[10px] font-medium",
+          isPositive ? "text-emerald-600" : "text-rose-600"
+        )}>
+          {isPositive ? '+' : ''}{prefix}{diff.toLocaleString()}
+        </span>
+      )}
     </div>
   );
 }
