@@ -5,8 +5,13 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } fro
 import { 
   TrendingUp, TrendingDown, MousePointer2, Eye, Target, 
   ShoppingCart, Link as LinkIcon, AlertCircle, DollarSign,
-  ChevronDown, Calendar, Store, Megaphone, Filter, Loader2
+  ChevronDown, Calendar, Store, Megaphone, Filter, Loader2,
+  ArrowLeft
 } from 'lucide-react';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
+  Legend, ResponsiveContainer 
+} from 'recharts';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -62,6 +67,49 @@ const getMockData = (store: string, promotion: string, start: Date | null, end: 
   return { metrics, linkData };
 };
 
+const getTrendData = (linkId: string, start: Date | null, end: Date | null) => {
+  if (!start || !end) return [];
+  
+  const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
+  const data = [];
+  
+  for (let i = 0; i < days; i++) {
+    const date = new Date(start);
+    date.setDate(date.getDate() + i);
+    
+    // Deterministic random based on linkId and date
+    const seed = `${linkId}-${date.toDateString()}`;
+    const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    const random = (min: number, max: number) => {
+      const x = Math.sin(hash) * 10000;
+      return min + (x - Math.floor(x)) * (max - min);
+    };
+
+    data.push({
+      date: format(date, 'MM/dd'),
+      spend: Math.floor(random(500, 2000)),
+      roi: Number(random(1.5, 5.0).toFixed(2)),
+      clicks: Math.floor(random(100, 500)),
+      ctr: Number(random(1.5, 4.5).toFixed(2)),
+      cvr: Number(random(2, 6).toFixed(2)),
+      cpc: Number(random(5, 15).toFixed(2)),
+      cart: Math.floor(random(50, 150)),
+    });
+  }
+  
+  return data;
+};
+
+const METRIC_CONFIG = [
+  { id: 'spend', label: '支出', color: '#6366f1' },
+  { id: 'roi', label: 'ROI', color: '#10b981' },
+  { id: 'clicks', label: '点击量', color: '#3b82f6' },
+  { id: 'ctr', label: '点击率 (%)', color: '#f59e0b' },
+  { id: 'cvr', label: '转化率 (%)', color: '#8b5cf6' },
+  { id: 'cpc', label: '点击单价', color: '#f43f5e' },
+  { id: 'cart', label: '购物车', color: '#0891b2' },
+];
+
 export default function DigitalMarketingAnalysis() {
   const [selectedStore, setSelectedStore] = useState(STORES[0]);
   const [selectedPromotion, setSelectedPromotion] = useState(PROMOTIONS[0]);
@@ -76,6 +124,8 @@ export default function DigitalMarketingAnalysis() {
   // Data State
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(() => getMockData(STORES[0], PROMOTIONS[0], new Date(2026, 2, 11), new Date(2026, 2, 18)));
+  const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['spend', 'roi']);
 
   const storeRef = useRef<HTMLDivElement>(null);
   const promotionRef = useRef<HTMLDivElement>(null);
@@ -106,6 +156,31 @@ export default function DigitalMarketingAnalysis() {
 
   const maxSpend = useMemo(() => Math.max(...data.linkData.map(d => d.spend)), [data.linkData]);
   const maxRoi = 5;
+
+  const trendData = useMemo(() => {
+    if (!selectedLinkId) return [];
+    return getTrendData(selectedLinkId, startDate, endDate);
+  }, [selectedLinkId, startDate, endDate]);
+
+  const toggleMetric = (metricId: string) => {
+    setSelectedMetrics(prev => {
+      if (prev.includes(metricId)) {
+        if (prev.length === 1) return prev; // Keep at least one
+        return prev.filter(id => id !== metricId);
+      }
+      if (prev.length >= 4) return prev; // Max 4
+      return [...prev, metricId];
+    });
+  };
+
+  const handleLinkClick = (linkId: string, initialMetric?: string) => {
+    setSelectedLinkId(linkId);
+    if (initialMetric) {
+      setSelectedMetrics([initialMetric]);
+    } else {
+      setSelectedMetrics(['spend', 'roi']);
+    }
+  };
 
   const handlePresetClick = (preset: string) => {
     setActivePreset(preset);
@@ -160,7 +235,100 @@ export default function DigitalMarketingAnalysis() {
         </div>
       )}
 
-      {/* Header Filters */}
+      {selectedLinkId ? (
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSelectedLinkId(null)}
+                className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
+              >
+                <ArrowLeft size={20} className="text-slate-600" />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900">趋势分析 - {selectedLinkId}</h2>
+                <p className="text-sm text-slate-500">
+                  {startDate ? format(startDate, 'yyyy/MM/dd') : ''} - {endDate ? format(endDate, 'yyyy/MM/dd') : ''}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
+            <div className="flex flex-wrap gap-2">
+              {METRIC_CONFIG.map(m => (
+                <button
+                  key={m.id}
+                  onClick={() => toggleMetric(m.id)}
+                  className={cn(
+                    "px-4 py-2 rounded-lg text-sm font-bold transition-all border",
+                    selectedMetrics.includes(m.id)
+                      ? "bg-slate-900 text-white border-slate-900"
+                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
+                  )}
+                >
+                  <div className="flex items-center gap-2">
+                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
+                    {m.label}
+                  </div>
+                </button>
+              ))}
+              <div className="ml-auto text-[10px] font-bold text-slate-400 uppercase self-center">
+                最多选择 4 个指标
+              </div>
+            </div>
+
+            <div className="h-[400px] w-full">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                  <XAxis 
+                    dataKey="date" 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                    dy={10}
+                  />
+                  <YAxis 
+                    axisLine={false} 
+                    tickLine={false} 
+                    tick={{ fontSize: 12, fill: '#94a3b8' }}
+                  />
+                  <Tooltip 
+                    contentStyle={{ 
+                      borderRadius: '12px', 
+                      border: 'none', 
+                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      padding: '12px'
+                    }}
+                  />
+                  <Legend 
+                    verticalAlign="top" 
+                    align="right" 
+                    height={36}
+                    iconType="circle"
+                    formatter={(value) => <span className="text-xs font-bold text-slate-600">{METRIC_CONFIG.find(m => m.id === value)?.label}</span>}
+                  />
+                  {selectedMetrics.map(metricId => (
+                    <Line
+                      key={metricId}
+                      type="monotone"
+                      dataKey={metricId}
+                      stroke={METRIC_CONFIG.find(m => m.id === metricId)?.color}
+                      strokeWidth={3}
+                      dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      animationDuration={1000}
+                    />
+                  ))}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <>
+          {/* Header Filters */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2 mr-4">
           <div className="p-2 bg-indigo-50 rounded-lg">
@@ -337,6 +505,7 @@ export default function DigitalMarketingAnalysis() {
               return (
                 <div 
                   key={idx} 
+                  onClick={() => handleLinkClick(item.id)}
                   className={cn(
                     "grid grid-cols-[100px_120px_1fr_100px] gap-4 items-center p-4 rounded-xl border transition-all cursor-pointer",
                     isWarning 
@@ -353,14 +522,22 @@ export default function DigitalMarketingAnalysis() {
                   <div className="flex items-center justify-center h-8 bg-slate-50/50 rounded-lg px-2 gap-0.5">
                     <div className="flex-1 flex justify-end">
                       <div 
-                        className="h-4 bg-indigo-500 rounded-l-sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLinkClick(item.id, 'spend');
+                        }}
+                        className="h-4 bg-indigo-500 rounded-l-sm hover:brightness-110 transition-all" 
                         style={{ width: `${spendWidth}%` }}
                       />
                     </div>
                     <div className="w-px h-6 bg-slate-200" />
                     <div className="flex-1 flex justify-start">
                       <div 
-                        className="h-4 bg-emerald-500 rounded-r-sm" 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleLinkClick(item.id, 'roi');
+                        }}
+                        className="h-4 bg-emerald-500 rounded-r-sm hover:brightness-110 transition-all" 
                         style={{ width: `${roiWidth}%` }}
                       />
                     </div>
@@ -377,6 +554,8 @@ export default function DigitalMarketingAnalysis() {
           </div>
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 }
