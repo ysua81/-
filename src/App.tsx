@@ -55,7 +55,7 @@ const SortableHeader = ({
       onClick={() => onSort(sortKey)}
     >
       <div className={cn(
-        "px-4 py-3 flex items-center gap-1", 
+        "px-4 py-3 flex items-center gap-1 whitespace-nowrap", 
         align === 'right' ? 'justify-end text-right' : align === 'center' ? 'justify-center text-center' : 'justify-start text-left'
       )}>
         {align === 'center' && sortKey !== 'id' && <div className="w-[10px]" />}
@@ -1486,7 +1486,7 @@ export default function App() {
     let result = competitiveData;
 
     if (productFilter !== '全部商品') {
-      result = result.filter(d => d.productType === productFilter);
+      result = result.filter(d => d.platformType === productFilter);
     }
 
     if (originFilter !== 'all') {
@@ -2326,18 +2326,18 @@ export default function App() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-white text-slate-500 text-[11px] font-bold uppercase tracking-wider border-b border-slate-100">
-                      <th className="px-4 py-4 w-10">
+                      <th className="px-4 py-4 w-10 whitespace-nowrap">
                         <input type="checkbox" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                       </th>
-                      <th className="px-4 py-4">商品</th>
-                      <th className="px-4 py-4">店铺</th>
+                      <th className="px-4 py-4 whitespace-nowrap">商品</th>
+                      <th className="px-4 py-4 whitespace-nowrap">店铺</th>
                       <SortableHeader label="排名" sortKey="rank" currentSort={sortConfig} onSort={handleSort} align="center" />
                       <SortableHeader label="交易指数" sortKey="transactionIndex" currentSort={sortConfig} onSort={handleSort} align="right" />
                       <SortableHeader label="流量指数" sortKey="trafficIndex" currentSort={sortConfig} onSort={handleSort} align="right" />
                       <SortableHeader label="搜索指数" sortKey="searchIndex" currentSort={sortConfig} onSort={handleSort} align="right" />
                       <SortableHeader label="搜索增长幅度" sortKey="searchGrowth" currentSort={sortConfig} onSort={handleSort} align="center" />
                       <SortableHeader label="有效询盘用户指数" sortKey="effectiveInquiryIndex" currentSort={sortConfig} onSort={handleSort} align="right" />
-                      <th className="px-4 py-4">上架时间</th>
+                      <th className="px-4 py-4 whitespace-nowrap">上架时间</th>
                       <SortableHeader label="月成交" sortKey="monthlySales" currentSort={sortConfig} onSort={handleSort} align="right" />
                       <SortableHeader label="月代销" sortKey="monthlyDropshipping" currentSort={sortConfig} onSort={handleSort} align="right" />
                       <SortableHeader label="年成交件数" sortKey="yearlySalesVolume" currentSort={sortConfig} onSort={handleSort} align="right" />
@@ -2347,7 +2347,7 @@ export default function App() {
                       <SortableHeader label="揽收率" sortKey="collectionRate" currentSort={sortConfig} onSort={handleSort} align="center" />
                       <SortableHeader label="商品复购率" sortKey="repurchaseRate" currentSort={sortConfig} onSort={handleSort} align="center" />
                       <SortableHeader label="加购人数" sortKey="addToCartCount" currentSort={sortConfig} onSort={handleSort} align="right" />
-                      <th className="px-4 py-4 text-center relative">
+                      <th className="px-4 py-4 text-center relative whitespace-nowrap">
                         <div 
                           className="flex items-center justify-center gap-1 cursor-pointer hover:text-indigo-600 transition-colors"
                           onClick={() => setShowOriginDropdown(!showOriginDropdown)}
@@ -2382,10 +2382,10 @@ export default function App() {
                       .slice(0, 20)
                       .map((product) => (
                         <tr key={product.id} className="hover:bg-slate-50 transition-colors group">
-                          <td className="px-4 py-6">
+                          <td className="px-4 py-6 whitespace-nowrap">
                             <input type="checkbox" className="rounded border-slate-300 text-indigo-600 focus:ring-indigo-500" />
                           </td>
-                          <td className="px-4 py-6">
+                          <td className="px-4 py-6 whitespace-nowrap">
                             <div className="flex items-center gap-3">
                               <img 
                                 src={product.image} 
@@ -2404,7 +2404,7 @@ export default function App() {
                               </div>
                             </div>
                           </td>
-                          <td className="px-4 py-6">
+                          <td className="px-4 py-6 whitespace-nowrap">
                             <div className="flex items-center gap-2">
                               <div className="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center overflow-hidden">
                                 <img src={`https://picsum.photos/seed/${product.storeName}/20/20`} alt="" className="w-full h-full object-cover" referrerPolicy="no-referrer" />
@@ -2412,21 +2412,21 @@ export default function App() {
                               <span className="text-sm text-slate-600 whitespace-nowrap">{product.storeName}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-6 text-center">
-                            <span className="text-sm font-bold text-slate-900">{product._rank}</span>
+                          <td className="px-4 py-6 text-center whitespace-nowrap">
+                            <span className="text-sm font-bold text-slate-900">{product.rank}</span>
                           </td>
-                          <td className="px-4 py-6 text-right">
+                          <td className="px-4 py-6 text-right whitespace-nowrap">
                             <div className="inline-block border-b-2 border-blue-500 pb-0.5">
                               <span className="text-sm font-bold text-slate-900">{product.transactionIndex.toLocaleString()}</span>
                             </div>
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.trafficIndex.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.searchIndex.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-center">
+                          <td className="px-4 py-6 text-center whitespace-nowrap">
                             <div className={cn(
                               "inline-flex items-center gap-1 font-bold text-xs",
                               product.searchGrowth >= 0 ? "text-emerald-500" : "text-rose-500"
@@ -2435,31 +2435,31 @@ export default function App() {
                               {Math.abs(product.searchGrowth).toFixed(2)}%
                             </div>
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600 font-medium">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 font-medium whitespace-nowrap">
                             {product.effectiveInquiryIndex.toLocaleString()}
                           </td>
                           <td className="px-4 py-6 text-sm text-slate-500 whitespace-nowrap">
                             {product.listingTime}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.monthlySales.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.monthlyDropshipping.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.yearlySalesVolume.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.yearlyTransactionCount.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.reviewCount.toLocaleString()}
                           </td>
-                          <td className="px-4 py-6 text-center text-sm text-slate-600">
+                          <td className="px-4 py-6 text-center text-sm text-slate-600 whitespace-nowrap">
                             {product.positiveRate.toFixed(1)}%
                           </td>
-                          <td className="px-4 py-6 text-center">
+                          <td className="px-4 py-6 text-center whitespace-nowrap">
                             <div className="flex items-center justify-center gap-2">
                               <div className="w-16 h-1.5 bg-slate-100 rounded-full overflow-hidden">
                                 <div 
@@ -2470,10 +2470,10 @@ export default function App() {
                               <span className="text-xs text-slate-500">{product.collectionRate.toFixed(1)}%</span>
                             </div>
                           </td>
-                          <td className="px-4 py-6 text-center text-sm text-slate-600">
+                          <td className="px-4 py-6 text-center text-sm text-slate-600 whitespace-nowrap">
                             {product.repurchaseRate.toFixed(1)}%
                           </td>
-                          <td className="px-4 py-6 text-right text-sm text-slate-600">
+                          <td className="px-4 py-6 text-right text-sm text-slate-600 whitespace-nowrap">
                             {product.addToCartCount.toLocaleString()}
                           </td>
                           <td className="px-4 py-6 text-center text-xs text-slate-500 whitespace-nowrap">

@@ -18,7 +18,8 @@ import {
   Grid,
   User,
   Clock,
-  Search
+  Search,
+  HelpCircle
 } from 'lucide-react';
 import { StrategicCategory, KeywordData } from '../types';
 import { generateStrategicMapData, generateKeywordData } from '../mockData';
@@ -161,8 +162,35 @@ export default function StrategicMap() {
     { user: '张三', time: '2025-03-16 11:05', title: '折叠浴桶 婴儿 泡脚 2025新款 特惠', ...inferAudienceAndScenario('折叠浴桶 婴儿 泡脚 2025新款 特惠') },
   ]);
   const [libraryUserFilter, setLibraryUserFilter] = useState('全部用户');
+  const [sortConfig, setSortConfig] = useState<{ key: keyof KeywordData, direction: 'asc' | 'desc' } | null>({ key: 'searchIndex', direction: 'desc' });
 
   const keywordData = React.useMemo(() => generateKeywordData(filterKeyword), [filterKeyword]);
+
+  const sortedKeywordData = React.useMemo(() => {
+    let sortableItems = [...keywordData];
+    if (sortConfig !== null) {
+      sortableItems.sort((a, b) => {
+        const aValue = a[sortConfig.key];
+        const bValue = b[sortConfig.key];
+        if (aValue < bValue) {
+          return sortConfig.direction === 'asc' ? -1 : 1;
+        }
+        if (aValue > bValue) {
+          return sortConfig.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+    return sortableItems;
+  }, [keywordData, sortConfig]);
+
+  const requestSort = (key: keyof KeywordData) => {
+    let direction: 'asc' | 'desc' = 'desc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'desc') {
+      direction = 'asc';
+    }
+    setSortConfig({ key, direction });
+  };
 
   const calculateSimilarity = (title: string) => {
     if (libraryTitles.length === 0) return 0;
@@ -527,7 +555,7 @@ export default function StrategicMap() {
                 <div className="w-5 h-5 bg-indigo-100 rounded flex items-center justify-center">
                   <Database size={12} className="text-indigo-600" />
                 </div>
-                <h3 className="font-bold text-slate-800">关键词数据源</h3>
+                <h3 className="font-bold text-slate-800">热搜词排行</h3>
               </div>
               {filterKeyword && (
                 <div className="flex items-center gap-2 px-2 py-1 bg-indigo-50 text-indigo-600 rounded-md text-xs font-bold">
@@ -545,22 +573,106 @@ export default function StrategicMap() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">排名</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">关键词</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">搜索指数</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">点击率</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">支付转化率</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">支付指数</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">点击指数</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">操作</th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('rank')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>排名</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'rank' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'rank' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">搜索词</th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('searchIndex')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>搜索指数</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'searchIndex' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'searchIndex' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('searchGrowth')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>搜索增长幅度</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'searchGrowth' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'searchGrowth' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('clickRate')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>点击率</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'clickRate' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'clickRate' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('productIndex')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>商品指数</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'productIndex' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'productIndex' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('supplyDemandIndex')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>供需指数</span>
+                      <HelpCircle size={12} className="text-slate-400" />
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'supplyDemandIndex' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'supplyDemandIndex' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th 
+                    className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 cursor-pointer hover:bg-slate-100/50 transition-colors whitespace-nowrap"
+                    onClick={() => requestSort('monthlyPrice')}
+                  >
+                    <div className="flex items-center gap-1">
+                      <span>包月推广价</span>
+                      <div className="flex flex-col ml-1">
+                        <ChevronDown size={10} className={cn("rotate-180 -mb-1", sortConfig?.key === 'monthlyPrice' && sortConfig?.direction === 'asc' ? "text-indigo-600" : "text-slate-300")} />
+                        <ChevronDown size={10} className={cn(sortConfig?.key === 'monthlyPrice' && sortConfig?.direction === 'desc' ? "text-indigo-600" : "text-slate-300")} />
+                      </div>
+                    </div>
+                  </th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
-                {keywordData
+                {sortedKeywordData
                   .filter(item => !filterKeyword || item.keyword.includes(filterKeyword))
                   .map((item) => (
                   <tr key={item.rank} className="hover:bg-slate-50/50 transition-colors group cursor-pointer" onClick={() => handleKeywordSelect(item.keyword)}>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className={cn(
                         "inline-flex items-center justify-center w-6 h-6 rounded-full text-xs font-bold",
                         item.rank <= 3 ? "bg-indigo-600 text-white shadow-md shadow-indigo-100" : "bg-slate-100 text-slate-500"
@@ -568,25 +680,34 @@ export default function StrategicMap() {
                         {item.rank}
                       </span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-sm font-bold text-slate-700 group-hover:text-indigo-600 transition-colors">{item.keyword}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-sm font-mono text-slate-600">{item.searchIndex.toLocaleString()}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <div className={cn(
+                        "flex items-center gap-1 text-sm font-mono",
+                        item.searchGrowth > 0 ? "text-rose-500" : "text-emerald-500"
+                      )}>
+                        {item.searchGrowth > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                        {Math.abs(item.searchGrowth).toFixed(2)}%
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-sm font-mono text-slate-600">{item.clickRate.toFixed(2)}%</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-mono text-slate-600">{item.paymentConversion.toFixed(2)}%</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm font-mono text-slate-600">{item.productIndex.toLocaleString()}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-mono text-slate-600">{item.paymentIndex.toLocaleString()}</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm font-mono text-slate-600">{item.supplyDemandIndex.toLocaleString()}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-sm font-mono text-slate-600">{item.clickIndex.toLocaleString()}</span>
+                    <td className="px-4 py-3 whitespace-nowrap">
+                      <span className="text-sm font-mono text-slate-600">¥{item.monthlyPrice.toLocaleString()}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <button 
                         onClick={(e) => {
                           e.stopPropagation();
@@ -600,6 +721,15 @@ export default function StrategicMap() {
                         )}
                       >
                         {selectedWords.includes(item.keyword) ? <X size={14} /> : <Plus size={14} />}
+                      </button>
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          // Add to collection logic
+                        }}
+                        className="ml-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
+                      >
+                        添加至我的收藏词
                       </button>
                     </td>
                   </tr>
@@ -644,12 +774,12 @@ export default function StrategicMap() {
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-slate-50/50">
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用者</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">使用时间</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">标题名称</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">人群</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">场景</th>
-                  <th className="px-6 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100">操作</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">使用者</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">使用时间</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">标题名称</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">人群</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">场景</th>
+                  <th className="px-4 py-4 text-xs font-bold text-slate-500 uppercase tracking-wider border-b border-slate-100 whitespace-nowrap">操作</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -657,7 +787,7 @@ export default function StrategicMap() {
                   .filter(item => libraryUserFilter === '全部用户' || item.user === libraryUserFilter)
                   .map((item, idx) => (
                   <tr key={idx} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2">
                         <div className="w-8 h-8 bg-indigo-100 rounded-full flex items-center justify-center text-indigo-600 text-xs font-bold">
                           {item.user[0]}
@@ -665,13 +795,13 @@ export default function StrategicMap() {
                         <span className="text-sm font-medium text-slate-700">{item.user}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-2 text-slate-500">
                         <Clock size={14} />
                         <span className="text-sm font-mono">{item.time}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div 
                         onClick={() => {
                           navigator.clipboard.writeText(item.title);
@@ -685,13 +815,13 @@ export default function StrategicMap() {
                         </div>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{(item as any).audience}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <span className="text-xs px-2 py-1 bg-slate-100 text-slate-600 rounded-full">{(item as any).scenario}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-4 py-3 whitespace-nowrap">
                       <div className="flex items-center gap-3">
                         <button 
                           onClick={() => setDeleteConfirmIndex(idx)}

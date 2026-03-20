@@ -133,12 +133,12 @@ export const generateStrategicMapData = (category?: string): StrategicCategory[]
 
 export const generateKeywordData = (rootWord?: string | null): KeywordData[] => {
   const baseKeywords = [
-    { keyword: '餐椅', searchIndex: 124200, clickRate: 99.70, paymentConversion: 11.05, paymentIndex: 13700, clickIndex: 123800 },
-    { keyword: '游泳池', searchIndex: 85000, clickRate: 88.50, paymentConversion: 5.20, paymentIndex: 4500, clickIndex: 75000 },
-    { keyword: '折叠盆', searchIndex: 45000, clickRate: 75.20, paymentConversion: 6.10, paymentIndex: 2800, clickIndex: 34000 },
-    { keyword: '充气床', searchIndex: 62000, clickRate: 82.40, paymentConversion: 4.50, paymentIndex: 3100, clickIndex: 51000 },
-    { keyword: '婴儿浴盆', searchIndex: 38000, clickRate: 92.10, paymentConversion: 7.40, paymentIndex: 2900, clickIndex: 35000 },
-    { keyword: '滑雪圈', searchIndex: 25000, clickRate: 65.30, paymentConversion: 3.80, paymentIndex: 1200, clickIndex: 16000 },
+    { keyword: '餐椅', searchIndex: 124200, clickRate: 99.70, searchGrowth: 60.68, productIndex: 13700, supplyDemandIndex: 123800, monthlyPrice: 2500 },
+    { keyword: '游泳池', searchIndex: 85000, clickRate: 88.50, searchGrowth: 45.2, productIndex: 4500, supplyDemandIndex: 75000, monthlyPrice: 1800 },
+    { keyword: '折叠盆', searchIndex: 45000, clickRate: 75.20, searchGrowth: 32.1, productIndex: 2800, supplyDemandIndex: 34000, monthlyPrice: 1200 },
+    { keyword: '充气床', searchIndex: 62000, clickRate: 82.40, searchGrowth: -5.4, productIndex: 3100, supplyDemandIndex: 51000, monthlyPrice: 2100 },
+    { keyword: '婴儿浴盆', searchIndex: 38000, clickRate: 92.10, searchGrowth: 12.3, productIndex: 2900, supplyDemandIndex: 35000, monthlyPrice: 1500 },
+    { keyword: '滑雪圈', searchIndex: 25000, clickRate: 65.30, searchGrowth: 145.2, productIndex: 1200, supplyDemandIndex: 16000, monthlyPrice: 900 },
   ];
 
   const results: KeywordData[] = [];
@@ -151,10 +151,11 @@ export const generateKeywordData = (rootWord?: string | null): KeywordData[] => 
       rank: i,
       keyword: `${word}${base.keyword}${i}`,
       searchIndex: Math.floor(base.searchIndex * (0.8 + Math.random() * 0.4)),
+      searchGrowth: base.searchGrowth + (Math.random() * 10 - 5),
       clickRate: base.clickRate * (0.9 + Math.random() * 0.2),
-      paymentConversion: base.paymentConversion * (0.9 + Math.random() * 0.2),
-      paymentIndex: Math.floor(base.paymentIndex * (0.8 + Math.random() * 0.4)),
-      clickIndex: Math.floor(base.clickIndex * (0.8 + Math.random() * 0.4)),
+      productIndex: Math.floor(base.productIndex * (0.8 + Math.random() * 0.4)),
+      supplyDemandIndex: Math.floor(base.supplyDemandIndex * (0.8 + Math.random() * 0.4)),
+      monthlyPrice: Math.floor(base.monthlyPrice * (0.9 + Math.random() * 0.2)),
     });
   }
 

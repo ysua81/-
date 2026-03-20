@@ -489,7 +489,7 @@ export default function DigitalMarketingAnalysis() {
         </div>
 
         <div className="p-6">
-          <div className="grid grid-cols-[100px_120px_1fr_100px] gap-4 mb-4 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+          <div className="grid grid-cols-[100px_120px_1fr_100px] gap-4 mb-4 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
             <div>链接 ID</div>
             <div>花费金额</div>
             <div className="text-center">对比分析 (花费 VS ROI)</div>
@@ -513,10 +513,10 @@ export default function DigitalMarketingAnalysis() {
                       : "bg-white border-slate-100 hover:bg-slate-50"
                   )}
                 >
-                  <div className={cn("text-sm font-bold", isWarning ? "text-rose-600" : "text-slate-600")}>
+                  <div className={cn("text-sm font-bold whitespace-nowrap", isWarning ? "text-rose-600" : "text-slate-600")}>
                     {item.id}
                   </div>
-                  <div className="text-sm font-bold text-indigo-600">
+                  <div className="text-sm font-bold text-indigo-600 whitespace-nowrap">
                     ¥{item.spend.toLocaleString()}
                   </div>
                   <div className="flex items-center justify-center h-8 bg-slate-50/50 rounded-lg px-2 gap-0.5">

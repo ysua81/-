@@ -65,10 +65,11 @@ export interface KeywordData {
   rank: number;
   keyword: string;
   searchIndex: number;
+  searchGrowth: number; // 搜索增长幅度
   clickRate: number;
-  paymentConversion: number;
-  paymentIndex: number;
-  clickIndex: number;
+  productIndex: number; // 商品指数
+  supplyDemandIndex: number; // 供需指数
+  monthlyPrice: number; // 包月推广价
 }
 
 export interface StrategicCategory {
