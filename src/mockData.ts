@@ -4,82 +4,7 @@ import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 
 export const generateStrategicMapData = (category?: string): StrategicCategory[] => {
   const categories = [
     {
-      title: '人群需求',
-      topItem: { name: '婴儿', popularity: 32728092, growth: 60.68 },
-      items: [
-        { name: '儿童', popularity: 31138385, growth: 45.2 },
-        { name: '宝宝', popularity: 29837075, growth: 32.1 },
-        { name: '成人', popularity: 5047646, growth: -5.4 },
-        { name: '大人', popularity: 4407658, growth: 12.3 },
-        { name: '新生', popularity: 4059493, growth: 8.9 },
-        { name: '一岁', popularity: 3482294, growth: 15.6 },
-        { name: '幼儿', popularity: 3196079, growth: -2.1 },
-        { name: '游泳', popularity: 3076304, growth: 22.4 },
-        { name: '女士', popularity: 1933941, growth: 10.5 },
-      ]
-    },
-    {
-      title: '使用需求',
-      topItem: { name: '泡脚', popularity: 28349066, growth: 15.4 },
-      items: [
-        { name: '游泳', popularity: 23249082, growth: 28.9 },
-        { name: '泡澡', popularity: 13164853, growth: 12.1 },
-        { name: '滑雪', popularity: 5055012, growth: 145.2 },
-        { name: '洗澡', popularity: 4949664, growth: 5.6 },
-        { name: '拳击', popularity: 4923857, growth: 32.1 },
-        { name: '洗头', popularity: 4815870, growth: 8.9 },
-        { name: '洗脚', popularity: 3788488, growth: 10.2 },
-        { name: '坐浴', popularity: 3320303, growth: 14.5 },
-        { name: '训练', popularity: 2564817, growth: 22.1 },
-      ]
-    },
-    {
-      title: '其他需求',
-      topItem: { name: '消耗', popularity: 758666, growth: 5.4 },
-      items: [
-        { name: 'kk', popularity: 661780, growth: 12.3 },
-        { name: '成长', popularity: 619851, growth: 8.9 },
-        { name: '用品', popularity: 536219, growth: 15.6 },
-        { name: '人家', popularity: 487454, growth: -2.1 },
-        { name: '以上', popularity: 367764, growth: 22.4 },
-        { name: '一名', popularity: 348520, growth: 10.5 },
-        { name: '抽抽', popularity: 346629, growth: 5.6 },
-        { name: '体力', popularity: 313432, growth: 32.1 },
-        { name: '用盆', popularity: 285912, growth: 8.9 },
-      ]
-    },
-    {
-      title: '功能需求',
-      topItem: { name: '充气', popularity: 21210097, growth: 45.2 },
-      items: [
-        { name: '折叠', popularity: 12666251, growth: 32.1 },
-        { name: '游泳', popularity: 10563711, growth: -5.4 },
-        { name: '气垫', popularity: 5242931, growth: 12.3 },
-        { name: '电动', popularity: 2972861, growth: 8.9 },
-        { name: '便携', popularity: 2244701, growth: 15.6 },
-        { name: '防水', popularity: 2195839, growth: -2.1 },
-        { name: '带轮', popularity: 2115053, growth: 22.4 },
-        { name: '自动', popularity: 2057557, growth: 10.5 },
-        { name: '喷水', popularity: 2011542, growth: 5.6 },
-      ]
-    },
-    {
-      title: '品牌需求',
-      topItem: { name: 'stokke', popularity: 2504485, growth: 12.3 },
-      items: [
-        { name: '卡达', popularity: 2478609, growth: 8.9 },
-        { name: '哈卡', popularity: 2145882, growth: 15.6 },
-        { name: 'iuu', popularity: 1657759, growth: -2.1 },
-        { name: 'kk', popularity: 1129509, growth: 22.4 },
-        { name: '卡曼', popularity: 1037422, growth: 10.5 },
-        { name: '迪卡侬', popularity: 891465, growth: 5.6 },
-        { name: '肯德基', popularity: 866610, growth: 32.1 },
-        { name: '英发', popularity: 771820, growth: 8.9 },
-        { name: '气床', popularity: 721144, growth: 10.2 },
-      ]
-    },
-    {
-      title: '品类需求',
+      title: '品类',
       topItem: { name: '玩具', popularity: 35459759, growth: 15.6 },
       items: [
         { name: '脚桶', popularity: 25112762, growth: -2.1 },
@@ -94,7 +19,22 @@ export const generateStrategicMapData = (category?: string): StrategicCategory[]
       ]
     },
     {
-      title: '场景需求',
+      title: '人群',
+      topItem: { name: '婴儿', popularity: 32728092, growth: 60.68 },
+      items: [
+        { name: '儿童', popularity: 31138385, growth: 45.2 },
+        { name: '宝宝', popularity: 29837075, growth: 32.1 },
+        { name: '成人', popularity: 5047646, growth: -5.4 },
+        { name: '大人', popularity: 4407658, growth: 12.3 },
+        { name: '新生', popularity: 4059493, growth: 8.9 },
+        { name: '一岁', popularity: 3482294, growth: 15.6 },
+        { name: '幼儿', popularity: 3196079, growth: -2.1 },
+        { name: '游泳', popularity: 3076304, growth: 22.4 },
+        { name: '女士', popularity: 1933941, growth: 10.5 },
+      ]
+    },
+    {
+      title: '场景',
       topItem: { name: '家用', popularity: 12500, growth: 5.6 },
       items: [
         { name: '户外', popularity: 8900, growth: 32.1 },
@@ -106,6 +46,126 @@ export const generateStrategicMapData = (category?: string): StrategicCategory[]
         { name: '火车', popularity: 1200, growth: 8.9 },
         { name: '高铁', popularity: 900, growth: 15.6 },
         { name: '室内', popularity: 800, growth: -2.1 },
+      ]
+    },
+    {
+      title: '功能',
+      topItem: { name: '充气', popularity: 21210097, growth: 45.2 },
+      items: [
+        { name: '折叠', popularity: 12666251, growth: 32.1 },
+        { name: '游泳', popularity: 10563711, growth: -5.4 },
+        { name: '气垫', popularity: 5242931, growth: 12.3 },
+        { name: '电动', popularity: 2972861, growth: 8.9 },
+        { name: '便携', popularity: 2244701, growth: 15.6 },
+        { name: '防水', popularity: 2195839, growth: -2.1 },
+        { name: '带轮', popularity: 2115053, growth: 22.4 },
+        { name: '自动', popularity: 2057557, growth: 10.5 },
+        { name: '喷水', popularity: 2011542, growth: 5.6 },
+      ]
+    },
+    {
+      title: '使用',
+      topItem: { name: '泡脚', popularity: 28349066, growth: 15.4 },
+      items: [
+        { name: '游泳', popularity: 23249082, growth: 28.9 },
+        { name: '泡澡', popularity: 13164853, growth: 12.1 },
+        { name: '滑雪', popularity: 5055012, growth: 145.2 },
+        { name: '洗澡', popularity: 4949664, growth: 5.6 },
+        { name: '拳击', popularity: 4923857, growth: 32.1 },
+        { name: '洗头', popularity: 4815870, growth: 8.9 },
+        { name: '洗脚', popularity: 3788488, growth: 10.2 },
+        { name: '坐浴', popularity: 3320303, growth: 14.5 },
+        { name: '训练', popularity: 2564817, growth: 22.1 },
+      ]
+    },
+    {
+      title: '属性',
+      topItem: { name: '材质', popularity: 15459759, growth: 12.6 },
+      items: [
+        { name: '加厚', popularity: 12112762, growth: 18.1 },
+        { name: '环保', popularity: 9776434, growth: 25.4 },
+        { name: '耐磨', popularity: 8000478, growth: 8.5 },
+        { name: '防滑', popularity: 7985697, growth: 15.6 },
+        { name: '舒适', popularity: 6086882, growth: 32.1 },
+        { name: '柔软', popularity: 5002087, growth: 18.9 },
+        { name: '尺寸', popularity: 4208079, growth: 10.2 },
+        { name: '颜色', popularity: 3800672, growth: 14.5 },
+        { name: '大号', popularity: 2903629, growth: 22.1 },
+      ]
+    },
+    {
+      title: '时间',
+      topItem: { name: '2025新款', popularity: 18459759, growth: 45.6 },
+      items: [
+        { name: '夏季', popularity: 15112762, growth: 32.1 },
+        { name: '冬季', popularity: 11776434, growth: 12.4 },
+        { name: '四季通用', popularity: 9000478, growth: 10.5 },
+        { name: '节日', popularity: 6985697, growth: 5.6 },
+        { name: '生日', popularity: 5086882, growth: 32.1 },
+        { name: '周年', popularity: 4002087, growth: 8.9 },
+        { name: '限时', popularity: 3208079, growth: 10.2 },
+        { name: '全天', popularity: 2800672, growth: 14.5 },
+        { name: '夜用', popularity: 1903629, growth: 22.1 },
+      ]
+    },
+    {
+      title: '背书',
+      topItem: { name: '官方正品', popularity: 12459759, growth: 15.6 },
+      items: [
+        { name: '厂家直销', popularity: 10112762, growth: 22.1 },
+        { name: '质量保证', popularity: 8776434, growth: 12.4 },
+        { name: '售后无忧', popularity: 7000478, growth: 10.5 },
+        { name: '品牌授权', popularity: 5985697, growth: 5.6 },
+        { name: '专利产品', popularity: 4086882, growth: 32.1 },
+        { name: '检测报告', popularity: 3002087, growth: 8.9 },
+        { name: '明星同款', popularity: 2208079, growth: 10.2 },
+        { name: '网红推荐', popularity: 1800672, growth: 14.5 },
+        { name: '出口品质', popularity: 1203629, growth: 22.1 },
+      ]
+    },
+    {
+      title: '修饰词',
+      topItem: { name: '爆款', popularity: 25459759, growth: 35.6 },
+      items: [
+        { name: '热销', popularity: 20112762, growth: 22.1 },
+        { name: '推荐', popularity: 15776434, growth: 12.4 },
+        { name: '必备', popularity: 12000478, growth: 10.5 },
+        { name: '极速发货', popularity: 9985697, growth: 5.6 },
+        { name: '限时抢购', popularity: 8086882, growth: 32.1 },
+        { name: '特惠', popularity: 7002087, growth: 8.9 },
+        { name: '新款', popularity: 6208079, growth: 10.2 },
+        { name: '包邮', popularity: 5800672, growth: 14.5 },
+        { name: '秒杀', popularity: 4903629, growth: 22.1 },
+      ]
+    },
+    {
+      title: '品牌',
+      topItem: { name: 'stokke', popularity: 2504485, growth: 12.3 },
+      items: [
+        { name: '卡达', popularity: 2478609, growth: 8.9 },
+        { name: '哈卡', popularity: 2145882, growth: 15.6 },
+        { name: 'iuu', popularity: 1657759, growth: -2.1 },
+        { name: 'kk', popularity: 1129509, growth: 22.4 },
+        { name: '卡曼', popularity: 1037422, growth: 10.5 },
+        { name: '迪卡侬', popularity: 891465, growth: 5.6 },
+        { name: '肯德基', popularity: 866610, growth: 32.1 },
+        { name: '英发', popularity: 771820, growth: 8.9 },
+        { name: '气床', popularity: 721144, growth: 10.2 },
+      ]
+    },
+    {
+      title: '其他',
+      topItem: { name: '消耗', popularity: 758666, growth: 5.4 },
+      items: [
+        { name: 'kk', popularity: 661780, growth: 12.3 },
+        { name: '成长', popularity: 619851, growth: 8.9 },
+        { name: '用品', popularity: 536219, growth: 15.6 },
+        { name: '人家', popularity: 487454, growth: -2.1 },
+        { name: '以上', popularity: 367764, growth: 22.4 },
+        { name: '一名', popularity: 348520, growth: 10.5 },
+        { name: '抽抽', popularity: 346629, growth: 5.6 },
+        { name: '体力', popularity: 313432, growth: 32.1 },
+        { name: '用盆', popularity: 285912, growth: 8.9 },
       ]
     }
   ];

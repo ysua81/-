@@ -143,9 +143,7 @@ export default function StrategicMap() {
         topItem: sortedAll[0],
         items: sortedAll.slice(1)
       };
-    }).sort((a, b) => 
-      sortBy === 'popularity' ? b.topItem.popularity - a.topItem.popularity : b.topItem.growth - a.topItem.growth
-    );
+    }).sort((a, b) => 0); // Keep original order from mockData
   }, [rawStrategicData, sortBy]);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
   const [activeTab, setActiveTab] = useState<'matrix' | 'datasource' | 'library'>('matrix');
@@ -482,22 +480,22 @@ export default function StrategicMap() {
                 <div 
                   key={category.title} 
                   className={cn(
-                    "flex-1 min-w-[220px] border-r border-slate-100 last:border-0",
+                    "flex-1 min-w-[180px] border-r border-slate-100 last:border-0",
                     idx % 2 === 0 ? "bg-white" : "bg-slate-50/10"
                   )}
                 >
                   {/* Category Header (Top Item) */}
                   <div className="border-b border-slate-100">
-                    <div className="p-4 bg-slate-50/50">
-                      <div className="flex items-center justify-between mb-2">
+                    <div className="px-4 py-2 bg-slate-50/50">
+                      <div className="flex items-center justify-between mb-1">
                         <span className="text-sm font-bold text-indigo-600">{category.title}</span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">搜索人气 / 环比</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">人气/环比</span>
                       </div>
                     </div>
                     <div 
                       onClick={() => handleKeywordSelect(category.topItem.name)}
                       onDoubleClick={() => handleRootWordSelect(category.topItem.name)}
-                      className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
+                      className="px-4 py-2.5 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
                     >
                       <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{category.topItem.name}</span>
                       <div className="flex flex-col items-end">
@@ -522,7 +520,7 @@ export default function StrategicMap() {
                         key={item.name}
                         onClick={() => handleKeywordSelect(item.name)}
                         onDoubleClick={() => handleRootWordSelect(item.name)}
-                        className="px-4 py-3 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
+                        className="px-4 py-2.5 flex items-center justify-between hover:bg-indigo-50/50 cursor-pointer transition-colors group select-none"
                       >
                         <span className="text-sm text-slate-600 group-hover:text-indigo-600 transition-colors">{item.name}</span>
                         <div className="flex flex-col items-end">
@@ -721,15 +719,6 @@ export default function StrategicMap() {
                         )}
                       >
                         {selectedWords.includes(item.keyword) ? <X size={14} /> : <Plus size={14} />}
-                      </button>
-                      <button 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          // Add to collection logic
-                        }}
-                        className="ml-2 text-xs text-indigo-600 hover:text-indigo-700 font-medium"
-                      >
-                        添加至我的收藏词
                       </button>
                     </td>
                   </tr>
