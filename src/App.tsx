@@ -3156,8 +3156,8 @@ function DimensionModule({ title, selection, metrics, breakdown, onSelect }: Dim
           </div>
         ) : (
           <div className="space-y-4">
-            <GrowthRow label="本周同比 (WoW)" value={metrics.wow} />
-            <GrowthRow label="本月同比 (MoM)" value={metrics.mom} />
+            <GrowthRow label="本周环比 (WoW)" value={metrics.wow} />
+            <GrowthRow label="本月环比 (MoM)" value={metrics.mom} />
             <GrowthRow label="今年同比 (YoY)" value={metrics.yoy} />
           </div>
         )}

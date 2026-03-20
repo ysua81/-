@@ -469,7 +469,7 @@ export default function StrategicMap() {
                   className="appearance-none bg-white border border-slate-200 rounded-lg pl-3 pr-8 py-1 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[100px]"
                 >
                   <option value="popularity">搜索人气</option>
-                  <option value="growth">同比增长</option>
+                  <option value="growth">环比增长</option>
                 </select>
                 <ChevronDown size={12} className="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 pointer-events-none" />
               </div>
@@ -491,7 +491,7 @@ export default function StrategicMap() {
                     <div className="p-4 bg-slate-50/50">
                       <div className="flex items-center justify-between mb-2">
                         <span className="text-sm font-bold text-indigo-600">{category.title}</span>
-                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">搜索人气 / 同比</span>
+                        <span className="text-[10px] text-slate-400 uppercase tracking-wider font-bold">搜索人气 / 环比</span>
                       </div>
                     </div>
                     <div 

@@ -58,7 +58,7 @@ export interface GrowthMetrics {
 export interface StrategicDemandItem {
   name: string;
   popularity: number;
-  growth: number; // 同比增长
+  growth: number; // 环比增长
 }
 
 export interface KeywordData {
