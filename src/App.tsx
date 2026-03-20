@@ -29,6 +29,22 @@ function cn(...inputs: ClassValue[]) {
 
 const COLORS = ['#6366f1', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899'];
 
+const DISTRIBUTOR_GRADES: Record<string, { label: string, color: string }> = {
+  '分销商A': { label: 'S', color: 'bg-rose-500' },
+  '分销商B': { label: 'A', color: 'bg-amber-500' },
+  '分销商C': { label: 'B', color: 'bg-emerald-500' },
+  '分销商D': { label: 'C', color: 'bg-blue-500' },
+  '分销商E': { label: 'D', color: 'bg-slate-500' },
+};
+
+const GRADE_COLORS: Record<string, string> = {
+  'S': 'bg-rose-500',
+  'A': 'bg-amber-500',
+  'B': 'bg-emerald-500',
+  'C': 'bg-blue-500',
+  'D': 'bg-slate-500',
+};
+
 const SortableHeader = ({ 
   label, 
   sortKey, 
@@ -1031,7 +1047,7 @@ export default function App() {
   const [stores, setStores] = useState<string[]>(storeAttributions);
   const [positions, setPositions] = useState<Record<string, string[]>>(POSITIONS_DATA);
   const [categories, setCategories] = useState<any>(CATEGORY_DATA);
-  const [platforms, setPlatforms] = useState<string[]>(['亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', '抖音', '得物', '微信视频号']);
+  const [platforms, setPlatforms] = useState<string[]>(['跨境', '国内', '拼多多', '抖音', '淘宝', '京东', '阿里', '散户', '线下', '唯品会', '私域', '快手', '有赞微商城', '微信视频', '小红书', '得物']);
   const [distributors, setDistributors] = useState<string[]>(['分销商A', '分销商B', '分销商C', '分销商D', '分销商E']);
 
   // Management Modal Local States
@@ -1121,6 +1137,7 @@ export default function App() {
     { id: 'customerType', label: '新老客' },
     { id: 'isWholesale', label: '销售类型' },
     { id: 'distributorId', label: '分销商' },
+    { id: 'grade', label: '等级' },
   ];
 
   const dashboardHierarchy = [
@@ -1128,7 +1145,7 @@ export default function App() {
       id: 'platform',
       label: '客户销售渠道',
       searchable: true,
-      children: ['亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', '抖音', '得物', '微信视频号']
+      children: ['跨境', '国内', '拼多多', '抖音', '淘宝', '京东', '阿里', '散户', '线下', '唯品会', '私域', '快手', '有赞微商城', '微信视频', '小红书', '得物']
     },
     {
       id: 'customerType',
@@ -1145,6 +1162,11 @@ export default function App() {
       label: '分销商',
       searchable: true,
       children: distributors
+    },
+    {
+      id: 'grade',
+      label: '等级',
+      children: ['S', 'A', 'B', 'C', 'D']
     }
   ];
 
@@ -1404,6 +1426,10 @@ export default function App() {
               const val = d.customerType === 'New' ? '新客' : '老客';
               return val === dashboardFilterValue;
             }
+            if (dim.id === 'grade') {
+              const grade = DISTRIBUTOR_GRADES[d.distributorId]?.label || 'D';
+              return grade === dashboardFilterValue;
+            }
             return String((d as any)[dim.id]) === dashboardFilterValue;
           });
         }
@@ -1434,6 +1460,8 @@ export default function App() {
             key = d.platform;
           } else if (dim.id === 'distributorId') {
             key = d.distributorId;
+          } else if (dim.id === 'grade') {
+            key = DISTRIBUTOR_GRADES[d.distributorId]?.label || 'D';
           } else {
             key = String((d as any)[dim.id]);
           }
@@ -2057,11 +2085,27 @@ export default function App() {
                                     setDashboardSearchQuery('');
                                   }}
                                   className={cn(
-                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between",
                                     dashboardFilterValue === child ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  {child}
+                                  <span>{child}</span>
+                                  {dashboardDimensionId === 'distributorId' && DISTRIBUTOR_GRADES[child] && (
+                                    <span className={cn(
+                                      "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                                      dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", DISTRIBUTOR_GRADES[child].color)
+                                    )}>
+                                      {DISTRIBUTOR_GRADES[child].label}
+                                    </span>
+                                  )}
+                                  {dashboardDimensionId === 'grade' && GRADE_COLORS[child] && (
+                                    <span className={cn(
+                                      "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                                      dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", GRADE_COLORS[child])
+                                    )}>
+                                      {child}
+                                    </span>
+                                  )}
                                 </button>
                               ))}
                           </div>
@@ -2094,11 +2138,11 @@ export default function App() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
-                      <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} className="border-r border-slate-300 bg-slate-100/50" />
-                      <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="right" className="bg-indigo-50/30" />
+                      <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-slate-100/50" />
+                      <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-indigo-50/30" />
                       <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-indigo-50/30" />
                       <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-indigo-50/30" />
-                      <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="right" className="bg-emerald-50/20" />
+                      <SortableHeader label="销量" sortKey="salesVolume" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-emerald-50/20" />
                       <SortableHeader label="环比 (WoW)" sortKey="salesVolumeWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-emerald-50/20" />
                       <SortableHeader label="同比 (YoY)" sortKey="salesVolumeYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-emerald-50/20" />
                       <SortableHeader label="利润率" sortKey="margin" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-slate-50" />
@@ -2140,18 +2184,36 @@ export default function App() {
                                   isSelected ? "bg-indigo-50/80" : "hover:bg-slate-50"
                                 )}
                               >
-                                <td className="px-4 py-3 border-r border-slate-300 bg-slate-50/30">
-                                  <div className="flex items-center gap-3">
-                                    {isSelected && <div className="w-1 h-4 bg-indigo-500 rounded-full" />}
-                                    <span className={cn(
-                                      "text-sm font-medium transition-colors",
-                                      isSelected ? "text-indigo-700 font-bold" : "text-slate-600 group-hover:text-slate-900"
-                                    )}>
-                                      {item.id}
-                                    </span>
+                                <td className="px-4 py-3 text-center border-r border-slate-300 bg-slate-50/30">
+                                  <div className="flex flex-col items-center justify-center">
+                                    <div className="relative inline-flex items-center">
+                                      {isSelected && <div className="absolute -left-3 w-1 h-4 bg-indigo-500 rounded-full shrink-0" />}
+                                      <span className={cn(
+                                        "text-sm font-medium transition-colors",
+                                        isSelected ? "text-indigo-700 font-bold" : "text-slate-600 group-hover:text-slate-900"
+                                      )}>
+                                        {item.id}
+                                      </span>
+                                      {dim.id === 'distributorId' && DISTRIBUTOR_GRADES[item.id] && (
+                                        <span className={cn(
+                                          "ml-1 px-1 rounded-[3px] text-[10px] font-bold text-white uppercase leading-tight",
+                                          DISTRIBUTOR_GRADES[item.id].color
+                                        )}>
+                                          {DISTRIBUTOR_GRADES[item.id].label}
+                                        </span>
+                                      )}
+                                      {dim.id === 'grade' && GRADE_COLORS[item.id] && (
+                                        <span className={cn(
+                                          "ml-1 px-1 rounded-[3px] text-[10px] font-bold text-white uppercase leading-tight",
+                                          GRADE_COLORS[item.id]
+                                        )}>
+                                          {item.id}
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
-                                <td className="px-4 py-3 text-right bg-indigo-50/10">
+                                <td className="px-4 py-3 text-center bg-indigo-50/10">
                                   <span className="text-xs font-bold text-slate-900">¥{(item.metrics as any).salesAmount.toLocaleString()}</span>
                                 </td>
                                 <td className="px-4 py-3 text-center bg-indigo-50/10">
@@ -2160,7 +2222,7 @@ export default function App() {
                                 <td className="px-4 py-3 text-center border-r border-slate-300 bg-indigo-50/10">
                                   <CompactGrowth value={(item.metrics as any).salesAmountYoY} diff={(item.metrics as any).salesAmountYoYDiff} prefix="¥" />
                                 </td>
-                                <td className="px-4 py-3 text-right bg-emerald-50/5">
+                                <td className="px-4 py-3 text-center bg-emerald-50/5">
                                   <span className="text-xs font-bold text-slate-900">{(item.metrics as any).salesVolume.toLocaleString()}</span>
                                 </td>
                                 <td className="px-4 py-3 text-center bg-emerald-50/5">
@@ -2896,7 +2958,17 @@ export default function App() {
                 <div className="flex flex-wrap gap-2">
                   {distributors.map(distributor => (
                     <div key={distributor} className="flex items-center gap-2 bg-slate-100 px-3 py-1.5 rounded-lg text-xs font-medium text-slate-600 group">
-                      <span>{distributor}</span>
+                      <div className="flex flex-col items-start">
+                        <span>{distributor}</span>
+                        {DISTRIBUTOR_GRADES[distributor] && (
+                          <span className={cn(
+                            "px-1 py-0.5 rounded-[2px] text-[8px] font-bold text-white uppercase leading-none mt-0.5",
+                            DISTRIBUTOR_GRADES[distributor].color
+                          )}>
+                            {DISTRIBUTOR_GRADES[distributor].label}级
+                          </span>
+                        )}
+                      </div>
                       <button 
                         onClick={() => showConfirm('确认删除', `确定要删除分销商 "${distributor}" 吗？`, () => {
                           setDistributors(prev => prev.filter(d => d !== distributor));

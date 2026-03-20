@@ -223,9 +223,7 @@ export const generateKeywordData = (rootWord?: string | null): KeywordData[] => 
 };
 
 const platforms = [
-  '亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', 
-  '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', 
-  '抖音', '得物', '微信视频号'
+  '跨境', '国内', '拼多多', '抖音', '淘宝', '京东', '阿里', '散户', '线下', '唯品会', '私域', '快手', '有赞微商城', '微信视频', '小红书', '得物'
 ];
 const businessOwners = ['方建浩', '孔帅'];
 const salespeople = ['小王', '小李', '小张', '小赵', '小钱'];
