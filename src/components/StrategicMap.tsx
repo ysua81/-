@@ -146,6 +146,26 @@ export default function StrategicMap() {
     }).sort((a, b) => 0); // Keep original order from mockData
   }, [rawStrategicData, sortBy]);
   const [isCategoryOpen, setIsCategoryOpen] = useState(false);
+  const [categorySearch, setCategorySearch] = useState('');
+
+  const allPaths = React.useMemo(() => {
+    const categories = platform === '阿里巴巴' ? ALIBABA_CATEGORIES : AMAZON_CATEGORIES;
+    const paths: { l1: string, l2: string, l3: string, full: string }[] = [];
+    Object.entries(categories).forEach(([l1, l2s]: [string, any]) => {
+      Object.entries(l2s).forEach(([l2, l3s]: [string, any]) => {
+        l3s.forEach((l3: string) => {
+          paths.push({ l1, l2, l3, full: `${l1} > ${l2} > ${l3}` });
+        });
+      });
+    });
+    return paths;
+  }, [platform]);
+
+  const filteredPaths = React.useMemo(() => {
+    if (!categorySearch) return [];
+    return allPaths.filter(p => p.full.toLowerCase().includes(categorySearch.toLowerCase()));
+  }, [allPaths, categorySearch]);
+
   const [activeTab, setActiveTab] = useState<'matrix' | 'datasource' | 'library'>('matrix');
   const [filterKeyword, setFilterKeyword] = useState<string | null>(null);
   const [generatedTitles, setGeneratedTitles] = useState<string[]>([]);
@@ -316,64 +336,118 @@ export default function StrategicMap() {
             <div className="flex items-center gap-2">
               <span className="text-sm text-slate-500">类目</span>
               <div className="relative">
-                <button 
-                  onClick={() => setIsCategoryOpen(!isCategoryOpen)}
-                  className="flex items-center justify-between bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[240px] text-left"
-                >
-                  <span className="truncate">{categoryPath.join(' > ')}</span>
-                  <ChevronDown size={14} className="text-slate-400 ml-2 shrink-0" />
-                </button>
+                <div className={cn(
+                  "flex items-center bg-white border border-slate-200 rounded-lg px-3 py-1.5 focus-within:ring-2 focus-within:ring-indigo-500 min-w-[300px] transition-all",
+                  isCategoryOpen ? "ring-2 ring-indigo-500 border-indigo-500" : ""
+                )}>
+                  <Search size={14} className="text-slate-400 mr-2" />
+                  <input 
+                    type="text"
+                    value={isCategoryOpen ? categorySearch : categoryPath.join(' > ')}
+                    onChange={(e) => {
+                      setCategorySearch(e.target.value);
+                      setIsCategoryOpen(true);
+                    }}
+                    onFocus={() => {
+                      setIsCategoryOpen(true);
+                      setCategorySearch('');
+                    }}
+                    placeholder="搜索类目..."
+                    className="bg-transparent border-none outline-none text-sm w-full text-slate-700 placeholder:text-slate-400"
+                  />
+                  <button 
+                    onClick={() => {
+                      setIsCategoryOpen(!isCategoryOpen);
+                      if (!isCategoryOpen) setCategorySearch('');
+                    }}
+                    className="p-1 hover:bg-slate-100 rounded-md transition-colors"
+                  >
+                    <ChevronDown size={14} className={cn("text-slate-400 transition-transform duration-200", isCategoryOpen ? "rotate-180" : "")} />
+                  </button>
+                </div>
 
                 {isCategoryOpen && (
-                  <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] flex animate-in fade-in slide-in-from-top-2 duration-200">
-                    {/* Level 1 */}
-                    <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto">
-                      {Object.keys(currentCategories).map(l1 => (
-                        <button
-                          key={l1}
-                          onClick={() => setCategoryPath([l1, Object.keys(currentCategories[l1 as keyof typeof currentCategories])[0], (currentCategories[l1 as keyof typeof currentCategories] as any)[Object.keys(currentCategories[l1 as keyof typeof currentCategories])[0]][0]])}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                            categoryPath[0] === l1 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
-                          )}
-                        >
-                          {l1}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Level 2 */}
-                    <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto">
-                      {Object.keys(currentCategories[categoryPath[0] as keyof typeof currentCategories] || {}).map(l2 => (
-                        <button
-                          key={l2}
-                          onClick={() => setCategoryPath([categoryPath[0], l2, (currentCategories[categoryPath[0] as keyof typeof currentCategories] as any)[l2][0]])}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                            categoryPath[1] === l2 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
-                          )}
-                        >
-                          {l2}
-                        </button>
-                      ))}
-                    </div>
-                    {/* Level 3 */}
-                    <div className="w-48 p-2 max-h-80 overflow-y-auto">
-                      {((currentCategories[categoryPath[0] as keyof typeof currentCategories] as any)?.[categoryPath[1]] || []).map((l3: string) => (
-                        <button
-                          key={l3}
-                          onClick={() => {
-                            setCategoryPath([categoryPath[0], categoryPath[1], l3]);
-                            setIsCategoryOpen(false);
-                          }}
-                          className={cn(
-                            "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                            categoryPath[2] === l3 ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
-                          )}
-                        >
-                          {l3}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-xl z-[100] flex animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                    {categorySearch ? (
+                      <div className="w-[300px] max-h-80 overflow-y-auto p-2">
+                        {filteredPaths.length > 0 ? (
+                          <div className="space-y-1">
+                            {filteredPaths.map((p, i) => (
+                              <button
+                                key={i}
+                                onClick={() => {
+                                  setCategoryPath([p.l1, p.l2, p.l3]);
+                                  setIsCategoryOpen(false);
+                                  setCategorySearch('');
+                                }}
+                                className="w-full text-left px-3 py-2 rounded-lg text-xs font-medium text-slate-600 hover:bg-indigo-50 hover:text-indigo-600 transition-colors group"
+                              >
+                                <div className="flex flex-col">
+                                  <span className="text-[10px] text-slate-400 group-hover:text-indigo-400">{p.l1} {'>'} {p.l2}</span>
+                                  <span className="text-sm">{p.l3}</span>
+                                </div>
+                              </button>
+                            ))}
+                          </div>
+                        ) : (
+                          <div className="px-3 py-8 text-center space-y-2">
+                            <Search size={24} className="text-slate-200 mx-auto" />
+                            <p className="text-slate-400 text-xs">未找到相关类目</p>
+                          </div>
+                        )}
+                      </div>
+                    ) : (
+                      <div className="flex">
+                        {/* Level 1 */}
+                        <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto custom-scrollbar">
+                          {Object.keys(currentCategories).map(l1 => (
+                            <button
+                              key={l1}
+                              onClick={() => setCategoryPath([l1, Object.keys(currentCategories[l1 as keyof typeof currentCategories])[0], (currentCategories[l1 as keyof typeof currentCategories] as any)[Object.keys(currentCategories[l1 as keyof typeof currentCategories])[0]][0]])}
+                              className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                categoryPath[0] === l1 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              {l1}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Level 2 */}
+                        <div className="w-48 border-r border-slate-100 p-2 max-h-80 overflow-y-auto custom-scrollbar">
+                          {Object.keys(currentCategories[categoryPath[0] as keyof typeof currentCategories] || {}).map(l2 => (
+                            <button
+                              key={l2}
+                              onClick={() => setCategoryPath([categoryPath[0], l2, (currentCategories[categoryPath[0] as keyof typeof currentCategories] as any)[l2][0]])}
+                              className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                categoryPath[1] === l2 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              {l2}
+                            </button>
+                          ))}
+                        </div>
+                        {/* Level 3 */}
+                        <div className="w-48 p-2 max-h-80 overflow-y-auto custom-scrollbar">
+                          {((currentCategories[categoryPath[0] as keyof typeof currentCategories] as any)?.[categoryPath[1]] || []).map((l3: string) => (
+                            <button
+                              key={l3}
+                              onClick={() => {
+                                setCategoryPath([categoryPath[0], categoryPath[1], l3]);
+                                setIsCategoryOpen(false);
+                              }}
+                              className={cn(
+                                "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                categoryPath[2] === l3 ? "bg-indigo-600 text-white shadow-md" : "text-slate-600 hover:bg-slate-50"
+                              )}
+                            >
+                              {l3}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
