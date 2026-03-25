@@ -1127,7 +1127,7 @@ export default function App() {
   const [selectedMonth, setSelectedMonth] = useState<number | 'all'>('all');
 
   const filterDimensions = [
-    { id: 'storeName', label: '阿里店铺' },
+    { id: 'storeName', label: '店铺' },
     { id: 'category', label: '类目' },
     { id: 'position', label: '岗位' },
   ];
@@ -2586,11 +2586,11 @@ export default function App() {
             </div>
             
             <div className="p-6 space-y-8 overflow-y-auto custom-scrollbar flex-1">
-              {/* Add Ali Store */}
+              {/* Add Store */}
               <div className="space-y-4">
                 <h4 className="text-sm font-bold text-slate-700 flex items-center gap-2">
                   <StoreIcon size={16} className="text-indigo-500" />
-                  阿里店铺管理
+                  店铺管理
                 </h4>
                 <div className="flex gap-2">
                   <input 

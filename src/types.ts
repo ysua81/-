@@ -77,3 +77,43 @@ export interface StrategicCategory {
   topItem: StrategicDemandItem;
   items: StrategicDemandItem[];
 }
+
+export interface MarketingPlanData {
+  id: string;
+  planName: string; // 营销方案
+  spend: number; // 消耗
+  impressions: number; // 展现数
+  clicks: number; // 点击数
+  ctr: number; // 点击率
+  cpc: number; // 平均点击花费
+  inquiries: number; // 总询盘量
+  inquiryCost: number; // 询盘成本
+  status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
+}
+
+export interface KeywordAnalysisData {
+  id: string;
+  keyword: string; // 关键词
+  spend: number; // 消耗
+  impressions: number; // 展现数
+  clicks: number; // 点击数
+  ctr: number; // 点击率
+  cpc: number; // 平均点击花费
+  inquiries: number; // 总询盘量
+  inquiryCost: number; // 询盘成本
+  action: string; // 建议操作
+}
+
+export interface LinkAnalysisData {
+  id: string;
+  productId: string; // 商品ID
+  spend: number; // 消耗
+  impressions: number; // 展现数
+  clicks: number; // 点击数
+  ctr: number; // 点击率
+  cpc: number; // 平均点击花费
+  inquiries: number; // 总询盘量
+  inquiryCost: number; // 询盘成本
+  roi: number; // 投入产出比
+  status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
+}

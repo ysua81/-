@@ -1,5 +1,75 @@
-import { SalesRecord, CompetitiveProduct, StrategicCategory, KeywordData } from './types';
+import { 
+  SalesRecord, CompetitiveProduct, StrategicCategory, KeywordData,
+  MarketingPlanData, KeywordAnalysisData, LinkAnalysisData
+} from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
+
+export const generateMarketingPlanData = (count: number = 10): MarketingPlanData[] => {
+  const plans = ['大客生意解决方案', '首位展示', '定位推广', '搜索展播', '品牌专区', '全站推店', '全站销货', '精准获客', '关键词卡位'];
+  const statuses: ('优秀' | '良好' | '一般' | '待优化')[] = ['优秀', '良好', '一般', '待优化'];
+  
+  return Array.from({ length: count }).map((_, i) => {
+    const spend = Math.floor(Math.random() * 50000) + 5000;
+    const clicks = Math.floor(Math.random() * 2000) + 100;
+    const inquiries = Math.floor(Math.random() * 50) + 5;
+    return {
+      id: `plan-${i}`,
+      planName: plans[i % plans.length],
+      spend,
+      impressions: Math.floor(spend * (10 + Math.random() * 5)),
+      clicks,
+      ctr: Number((clicks / (spend * 10) * 100).toFixed(2)),
+      cpc: Number((spend / clicks).toFixed(2)),
+      inquiries,
+      inquiryCost: Number((spend / inquiries).toFixed(2)),
+      status: statuses[Math.floor(Math.random() * statuses.length)]
+    };
+  });
+};
+
+export const generateKeywordAnalysisData = (count: number = 15): KeywordAnalysisData[] => {
+  const keywords = ['餐椅', '游泳池', '折叠盆', '充气床', '婴儿浴盆', '滑雪圈', '户外用品', '家居装饰', '儿童玩具'];
+  const actions = ['增加出价', '优化关键词', '保持现状', '降低出价', '暂停推广'];
+  return Array.from({ length: count }).map((_, i) => {
+    const spend = Math.floor(Math.random() * 10000) + 1000;
+    const clicks = Math.floor(Math.random() * 500) + 50;
+    const inquiries = Math.floor(Math.random() * 20) + 1;
+    return {
+      id: `kw-${i}`,
+      keyword: keywords[i % keywords.length] + (i > 8 ? i : ''),
+      spend,
+      impressions: Math.floor(spend * (15 + Math.random() * 10)),
+      clicks,
+      ctr: Number((clicks / (spend * 15) * 100).toFixed(2)),
+      cpc: Number((spend / clicks).toFixed(2)),
+      inquiries,
+      inquiryCost: Number((spend / inquiries).toFixed(2)),
+      action: actions[Math.floor(Math.random() * actions.length)]
+    };
+  });
+};
+
+export const generateLinkAnalysisData = (count: number = 12): LinkAnalysisData[] => {
+  const statuses: ('优秀' | '良好' | '一般' | '待优化')[] = ['优秀', '良好', '一般', '待优化'];
+  return Array.from({ length: count }).map((_, i) => {
+    const spend = Math.floor(Math.random() * 20000) + 2000;
+    const clicks = Math.floor(Math.random() * 800) + 80;
+    const inquiries = Math.floor(Math.random() * 40) + 2;
+    return {
+      id: `link-${i}`,
+      productId: `P${1000 + i}`,
+      spend,
+      impressions: Math.floor(spend * (12 + Math.random() * 8)),
+      clicks,
+      ctr: Number((clicks / (spend * 12) * 100).toFixed(2)),
+      cpc: Number((spend / clicks).toFixed(2)),
+      inquiries,
+      inquiryCost: Number((spend / inquiries).toFixed(2)),
+      roi: Number((2 + Math.random() * 5).toFixed(2)),
+      status: statuses[Math.floor(Math.random() * statuses.length)]
+    };
+  });
+};
 
 export const generateStrategicMapData = (category?: string): StrategicCategory[] => {
   const categories = [

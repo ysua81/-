@@ -6,7 +6,7 @@ import {
   TrendingUp, TrendingDown, MousePointer2, Eye, Target, 
   ShoppingCart, Link as LinkIcon, AlertCircle, DollarSign,
   ChevronDown, Calendar, Store, Megaphone, Filter, Loader2,
-  ArrowLeft
+  ArrowLeft, Search, BarChart3
 } from 'lucide-react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -14,6 +14,16 @@ import {
 } from 'recharts';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import { 
+  generateMarketingPlanData, 
+  generateKeywordAnalysisData, 
+  generateLinkAnalysisData 
+} from '../mockData';
+import { 
+  MarketingPlanData, 
+  KeywordAnalysisData, 
+  LinkAnalysisData 
+} from '../types';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -27,14 +37,27 @@ interface MarketingMetric {
   color: string;
 }
 
-interface LinkData {
-  id: string;
-  spend: number;
-  roi: number;
-}
-
-const STORES = ['树外旗舰店', '简酷龙旗舰店', '莱蓓旗舰店'];
-const PROMOTIONS = ['全部推广', '货品全站推', '关键词推广', '人群推广', '内容推广'];
+const STORES = [
+  '7.阿里-义乌市益瑞康科技有限公司',
+  '9.阿里-义乌市青色贸易有限公司',
+  '66.阿里-义乌市起乾商贸有限公司',
+  '67.阿里-义乌市嘉述贸易有限公司',
+  '68.阿里-义乌市领阅贸易有限公司',
+  '阿里-义乌市数途贸易有限公司',
+  '阿里-义乌麦创科技有限公司',
+  '阿里-义乌氪创科技有限公司'
+];
+const PROMOTIONS = [
+  '大客生意解决方案',
+  '首位展示',
+  '定位推广',
+  '搜索展播',
+  '品牌专区',
+  '全站推店',
+  '全站销货',
+  '精准获客',
+  '关键词卡位'
+];
 
 // Mock data generator function
 const getMockData = (store: string, promotion: string, start: Date | null, end: Date | null) => {
@@ -48,26 +71,19 @@ const getMockData = (store: string, promotion: string, start: Date | null, end: 
   };
 
   const metrics: MarketingMetric[] = [
-    { label: '支出', value: `¥${Math.floor(random(100000, 200000)).toLocaleString()}`, trend: Number(random(-20, 30).toFixed(1)), icon: <DollarSign size={20} />, color: 'text-blue-600' },
-    { label: '平均投产 (ROI)', value: random(2.5, 4.5).toFixed(2), trend: Number(random(-10, 15).toFixed(1)), icon: <Target size={20} />, color: 'text-emerald-600' },
-    { label: '点击量', value: Math.floor(random(10000, 20000)).toLocaleString(), trend: Number(random(-5, 20).toFixed(1)), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
-    { label: '平均点击率', value: `${random(1.5, 4.5).toFixed(2)}%`, trend: Number(random(-2, 5).toFixed(1)), icon: <Eye size={20} />, color: 'text-orange-500' },
-    { label: '转化率', value: `${random(2, 6).toFixed(2)}%`, trend: Number(random(-3, 8).toFixed(1)), icon: <TrendingUp size={20} />, color: 'text-purple-600' },
-    { label: '平均点击单价', value: `¥${random(5, 15).toFixed(2)}`, trend: Number(random(-5, 5).toFixed(1)), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
-    { label: '购物车', value: Math.floor(random(1000, 3000)).toLocaleString(), trend: Number(random(-10, 25).toFixed(1)), icon: <ShoppingCart size={20} />, color: 'text-cyan-600' },
-    { label: '链接总数', value: Math.floor(random(8, 20)).toString(), trend: 0, icon: <LinkIcon size={20} />, color: 'text-amber-600' },
+    { label: '消耗 (元)', value: `¥${Math.floor(random(100000, 200000)).toLocaleString()}`, trend: Number(random(-20, 30).toFixed(1)), icon: <DollarSign size={20} />, color: 'text-blue-600' },
+    { label: '展现数', value: Math.floor(random(500000, 1000000)).toLocaleString(), trend: Number(random(-5, 15).toFixed(1)), icon: <Eye size={20} />, color: 'text-indigo-600' },
+    { label: '点击数', value: Math.floor(random(10000, 20000)).toLocaleString(), trend: Number(random(-5, 20).toFixed(1)), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
+    { label: '点击率', value: `${random(1.5, 4.5).toFixed(2)}%`, trend: Number(random(-2, 5).toFixed(1)), icon: <TrendingUp size={20} />, color: 'text-orange-500' },
+    { label: '平均点击花费', value: `¥${random(5, 15).toFixed(2)}`, trend: Number(random(-5, 5).toFixed(1)), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
+    { label: '总询盘量', value: Math.floor(random(100, 500)).toLocaleString(), trend: Number(random(-10, 25).toFixed(1)), icon: <Target size={20} />, color: 'text-emerald-600' },
+    { label: '询盘成本', value: `¥${random(200, 800).toFixed(2)}`, trend: Number(random(-15, 10).toFixed(1)), icon: <DollarSign size={20} />, color: 'text-cyan-600' },
   ];
 
-  const linkData: LinkData[] = Array.from({ length: 11 }).map((_, i) => ({
-    id: `L00${i + 1}`,
-    spend: Math.floor(random(5000, 25000)),
-    roi: Number(random(1.5, 5.0).toFixed(2))
-  })).sort((a, b) => b.spend - a.spend);
-
-  return { metrics, linkData };
+  return { metrics };
 };
 
-const getTrendData = (linkId: string, start: Date | null, end: Date | null) => {
+const getTrendData = (itemId: string, start: Date | null, end: Date | null) => {
   if (!start || !end) return [];
   
   const days = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24)) + 1;
@@ -77,8 +93,8 @@ const getTrendData = (linkId: string, start: Date | null, end: Date | null) => {
     const date = new Date(start);
     date.setDate(date.getDate() + i);
     
-    // Deterministic random based on linkId and date
-    const seed = `${linkId}-${date.toDateString()}`;
+    // Deterministic random based on itemId and date
+    const seed = `${itemId}-${date.toDateString()}`;
     const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
     const random = (min: number, max: number) => {
       const x = Math.sin(hash) * 10000;
@@ -88,12 +104,12 @@ const getTrendData = (linkId: string, start: Date | null, end: Date | null) => {
     data.push({
       date: format(date, 'MM/dd'),
       spend: Math.floor(random(500, 2000)),
-      roi: Number(random(1.5, 5.0).toFixed(2)),
+      impressions: Math.floor(random(5000, 20000)),
       clicks: Math.floor(random(100, 500)),
       ctr: Number(random(1.5, 4.5).toFixed(2)),
-      cvr: Number(random(2, 6).toFixed(2)),
       cpc: Number(random(5, 15).toFixed(2)),
-      cart: Math.floor(random(50, 150)),
+      inquiries: Math.floor(random(5, 25)),
+      inquiryCost: Number(random(50, 150).toFixed(2)),
     });
   }
   
@@ -101,13 +117,13 @@ const getTrendData = (linkId: string, start: Date | null, end: Date | null) => {
 };
 
 const METRIC_CONFIG = [
-  { id: 'spend', label: '支出', color: '#6366f1' },
-  { id: 'roi', label: 'ROI', color: '#10b981' },
-  { id: 'clicks', label: '点击量', color: '#3b82f6' },
+  { id: 'spend', label: '消耗 (元)', color: '#6366f1' },
+  { id: 'impressions', label: '展现数', color: '#10b981' },
+  { id: 'clicks', label: '点击数', color: '#3b82f6' },
   { id: 'ctr', label: '点击率 (%)', color: '#f59e0b' },
-  { id: 'cvr', label: '转化率 (%)', color: '#8b5cf6' },
-  { id: 'cpc', label: '点击单价', color: '#f43f5e' },
-  { id: 'cart', label: '购物车', color: '#0891b2' },
+  { id: 'cpc', label: '平均点击花费', color: '#f43f5e' },
+  { id: 'inquiries', label: '总询盘量', color: '#8b5cf6' },
+  { id: 'inquiryCost', label: '询盘成本', color: '#0891b2' },
 ];
 
 export default function DigitalMarketingAnalysis() {
@@ -121,11 +137,20 @@ export default function DigitalMarketingAnalysis() {
   const [endDate, setEndDate] = useState<Date | null>(new Date(2026, 2, 18));
   const [activePreset, setActivePreset] = useState('自定义');
 
+  // Analysis Tabs State
+  const [activeTab, setActiveTab] = useState<'marketingPlan' | 'keyword' | 'link'>('marketingPlan');
+  const [marketingPlanData, setMarketingPlanData] = useState<MarketingPlanData[]>([]);
+  const [keywordAnalysisData, setKeywordAnalysisData] = useState<KeywordAnalysisData[]>([]);
+  const [linkAnalysisData, setLinkAnalysisData] = useState<LinkAnalysisData[]>([]);
+
   // Data State
   const [isLoading, setIsLoading] = useState(false);
   const [data, setData] = useState(() => getMockData(STORES[0], PROMOTIONS[0], new Date(2026, 2, 11), new Date(2026, 2, 18)));
-  const [selectedLinkId, setSelectedLinkId] = useState<string | null>(null);
-  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['spend', 'roi']);
+
+  // Trend View State
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
+  const [selectedItemName, setSelectedItemName] = useState<string | null>(null);
+  const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['spend', 'clicks']);
 
   const storeRef = useRef<HTMLDivElement>(null);
   const promotionRef = useRef<HTMLDivElement>(null);
@@ -135,6 +160,9 @@ export default function DigitalMarketingAnalysis() {
     setIsLoading(true);
     const timer = setTimeout(() => {
       setData(getMockData(selectedStore, selectedPromotion, startDate, endDate));
+      setMarketingPlanData(generateMarketingPlanData(10));
+      setKeywordAnalysisData(generateKeywordAnalysisData(15));
+      setLinkAnalysisData(generateLinkAnalysisData(12));
       setIsLoading(false);
     }, 600); // Simulate network delay
 
@@ -153,34 +181,6 @@ export default function DigitalMarketingAnalysis() {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-
-  const maxSpend = useMemo(() => Math.max(...data.linkData.map(d => d.spend)), [data.linkData]);
-  const maxRoi = 5;
-
-  const trendData = useMemo(() => {
-    if (!selectedLinkId) return [];
-    return getTrendData(selectedLinkId, startDate, endDate);
-  }, [selectedLinkId, startDate, endDate]);
-
-  const toggleMetric = (metricId: string) => {
-    setSelectedMetrics(prev => {
-      if (prev.includes(metricId)) {
-        if (prev.length === 1) return prev; // Keep at least one
-        return prev.filter(id => id !== metricId);
-      }
-      if (prev.length >= 4) return prev; // Max 4
-      return [...prev, metricId];
-    });
-  };
-
-  const handleLinkClick = (linkId: string, initialMetric?: string) => {
-    setSelectedLinkId(linkId);
-    if (initialMetric) {
-      setSelectedMetrics([initialMetric]);
-    } else {
-      setSelectedMetrics(['spend', 'roi']);
-    }
-  };
 
   const handlePresetClick = (preset: string) => {
     setActivePreset(preset);
@@ -203,6 +203,32 @@ export default function DigitalMarketingAnalysis() {
       default:
         break;
     }
+  };
+
+  const trendTitle = useMemo(() => {
+    const prefix = activeTab === 'marketingPlan' ? '营销方案' : activeTab === 'keyword' ? '关键词' : '链接';
+    return `${prefix}趋势分析`;
+  }, [activeTab]);
+
+  const trendData = useMemo(() => {
+    if (!selectedItemId) return [];
+    return getTrendData(selectedItemId, startDate, endDate);
+  }, [selectedItemId, startDate, endDate]);
+
+  const toggleMetric = (metricId: string) => {
+    setSelectedMetrics(prev => {
+      if (prev.includes(metricId)) {
+        if (prev.length === 1) return prev; // Keep at least one
+        return prev.filter(id => id !== metricId);
+      }
+      if (prev.length >= 4) return prev; // Max 4
+      return [...prev, metricId];
+    });
+  };
+
+  const handleItemClick = (id: string, name: string) => {
+    setSelectedItemId(id);
+    setSelectedItemName(name);
   };
 
   // Custom Input for DatePicker
@@ -235,100 +261,7 @@ export default function DigitalMarketingAnalysis() {
         </div>
       )}
 
-      {selectedLinkId ? (
-        <div className="space-y-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
-              <button 
-                onClick={() => setSelectedLinkId(null)}
-                className="p-2 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors shadow-sm"
-              >
-                <ArrowLeft size={20} className="text-slate-600" />
-              </button>
-              <div>
-                <h2 className="text-2xl font-bold text-slate-900">趋势分析 - {selectedLinkId}</h2>
-                <p className="text-sm text-slate-500">
-                  {startDate ? format(startDate, 'yyyy/MM/dd') : ''} - {endDate ? format(endDate, 'yyyy/MM/dd') : ''}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-6">
-            <div className="flex flex-wrap gap-2">
-              {METRIC_CONFIG.map(m => (
-                <button
-                  key={m.id}
-                  onClick={() => toggleMetric(m.id)}
-                  className={cn(
-                    "px-4 py-2 rounded-lg text-sm font-bold transition-all border",
-                    selectedMetrics.includes(m.id)
-                      ? "bg-slate-900 text-white border-slate-900"
-                      : "bg-white text-slate-600 border-slate-200 hover:border-slate-300"
-                  )}
-                >
-                  <div className="flex items-center gap-2">
-                    <div className="w-2 h-2 rounded-full" style={{ backgroundColor: m.color }} />
-                    {m.label}
-                  </div>
-                </button>
-              ))}
-              <div className="ml-auto text-[10px] font-bold text-slate-400 uppercase self-center">
-                最多选择 4 个指标
-              </div>
-            </div>
-
-            <div className="h-[400px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={trendData} margin={{ top: 10, right: 30, left: 0, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis 
-                    dataKey="date" 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: '#94a3b8' }}
-                    dy={10}
-                  />
-                  <YAxis 
-                    axisLine={false} 
-                    tickLine={false} 
-                    tick={{ fontSize: 12, fill: '#94a3b8' }}
-                  />
-                  <Tooltip 
-                    contentStyle={{ 
-                      borderRadius: '12px', 
-                      border: 'none', 
-                      boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      padding: '12px'
-                    }}
-                  />
-                  <Legend 
-                    verticalAlign="top" 
-                    align="right" 
-                    height={36}
-                    iconType="circle"
-                    formatter={(value) => <span className="text-xs font-bold text-slate-600">{METRIC_CONFIG.find(m => m.id === value)?.label}</span>}
-                  />
-                  {selectedMetrics.map(metricId => (
-                    <Line
-                      key={metricId}
-                      type="monotone"
-                      dataKey={metricId}
-                      stroke={METRIC_CONFIG.find(m => m.id === metricId)?.color}
-                      strokeWidth={3}
-                      dot={{ r: 4, strokeWidth: 2, fill: '#fff' }}
-                      activeDot={{ r: 6, strokeWidth: 0 }}
-                      animationDuration={1000}
-                    />
-                  ))}
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-        </div>
-      ) : (
-        <>
-          {/* Header Filters */}
+      {/* Header Filters */}
       <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex flex-wrap items-center gap-4">
         <div className="flex items-center gap-2 mr-4">
           <div className="p-2 bg-indigo-50 rounded-lg">
@@ -438,123 +371,292 @@ export default function DigitalMarketingAnalysis() {
       </div>
 
       {/* Metrics Grid */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
-        {data.metrics.map((metric, idx) => (
-          <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-            <div className="flex items-center justify-between mb-3">
-              <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50", metric.color)}>
-                {metric.icon}
-              </div>
-              {metric.trend !== 0 && (
-                <div className={cn(
-                  "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
-                  metric.trend > 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
-                )}>
-                  {metric.trend > 0 ? '+' : ''}{metric.trend}%
+      {!selectedItemId && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+          {data.metrics.map((metric, idx) => (
+            <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
+              <div className="flex items-center justify-between mb-3">
+                <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50", metric.color)}>
+                  {metric.icon}
                 </div>
-              )}
-              {metric.trend === 0 && (
-                <div className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400">
-                  稳定
-                </div>
-              )}
+                {metric.trend !== 0 && (
+                  <div className={cn(
+                    "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
+                    metric.trend > 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                  )}>
+                    {metric.trend > 0 ? '+' : ''}{metric.trend}%
+                  </div>
+                )}
+                {metric.trend === 0 && (
+                  <div className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400">
+                    稳定
+                  </div>
+                )}
+              </div>
+              <p className="text-slate-500 text-xs font-medium mb-1">{metric.label}</p>
+              <h4 className="text-lg font-bold text-slate-900">{metric.value}</h4>
             </div>
-            <p className="text-slate-500 text-xs font-medium mb-1">{metric.label}</p>
-            <h4 className="text-lg font-bold text-slate-900">{metric.value}</h4>
-          </div>
-        ))}
-      </div>
-
-      {/* Comparison Chart Section */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-slate-100">
-          <div className="flex items-center justify-between mb-2">
-            <h3 className="text-xl font-bold text-slate-900">花费与投产对比分析</h3>
-            <div className="flex items-center gap-6">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-indigo-500" />
-                <span className="text-xs font-bold text-slate-500">花费 (SPEND)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-emerald-500" />
-                <span className="text-xs font-bold text-slate-500">投产 (ROI)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-rose-500" />
-                <span className="text-xs font-bold text-slate-500">危险预警 (ROI &lt; 3.5)</span>
-              </div>
-            </div>
-          </div>
-          <p className="text-sm text-slate-400">按花费金额从高到低排序，点击查看该链接趋势波动</p>
+          ))}
         </div>
+      )}
 
-        <div className="p-6">
-          <div className="grid grid-cols-[100px_120px_1fr_100px] gap-4 mb-4 px-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider whitespace-nowrap">
-            <div>链接 ID</div>
-            <div>花费金额</div>
-            <div className="text-center">对比分析 (花费 VS ROI)</div>
-            <div className="text-right">ROI 表现</div>
+      {/* Analysis Tabs Section / Trend View */}
+      {selectedItemId ? (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm p-8 space-y-8">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setSelectedItemId(null)}
+                className="w-10 h-10 rounded-xl border border-slate-200 flex items-center justify-center text-slate-400 hover:bg-slate-50 hover:text-slate-600 transition-all"
+              >
+                <ArrowLeft size={20} />
+              </button>
+              <div>
+                <h2 className="text-2xl font-bold text-slate-900 flex items-center gap-2">
+                  {trendTitle}: <span className="text-indigo-600">{selectedItemName}</span>
+                </h2>
+                <p className="text-sm text-slate-400 mt-1">点击下方指标切换展示趋势（最多选择4项）</p>
+              </div>
+            </div>
           </div>
 
-          <div className="space-y-2">
-            {data.linkData.map((item, idx) => {
-              const isWarning = item.roi < 3.5;
-              const spendWidth = (item.spend / maxSpend) * 50;
-              const roiWidth = (item.roi / maxRoi) * 50;
-
-              return (
+          <div className="flex flex-wrap gap-3">
+            {METRIC_CONFIG.map((metric) => (
+              <button
+                key={metric.id}
+                onClick={() => toggleMetric(metric.id)}
+                className={cn(
+                  "flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold transition-all border",
+                  selectedMetrics.includes(metric.id)
+                    ? "bg-indigo-600 text-white border-indigo-600 shadow-lg shadow-indigo-200"
+                    : "bg-slate-50 text-slate-500 border-transparent hover:bg-slate-100 hover:text-slate-700"
+                )}
+              >
                 <div 
-                  key={idx} 
-                  onClick={() => handleLinkClick(item.id)}
+                  className="w-2 h-2 rounded-full" 
+                  style={{ backgroundColor: selectedMetrics.includes(metric.id) ? '#fff' : metric.color }} 
+                />
+                {metric.label}
+                {selectedMetrics.includes(metric.id) && <div className="ml-1 w-3 h-3 flex items-center justify-center">✓</div>}
+              </button>
+            ))}
+          </div>
+
+          <div className="h-[450px] w-full pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis 
+                  dataKey="date" 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                  dy={10}
+                />
+                <YAxis 
+                  axisLine={false} 
+                  tickLine={false} 
+                  tick={{ fill: '#94a3b8', fontSize: 12 }}
+                />
+                <Tooltip 
+                  contentStyle={{ 
+                    backgroundColor: '#fff', 
+                    borderRadius: '12px', 
+                    border: 'none', 
+                    boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' 
+                  }}
+                />
+                <Legend 
+                  verticalAlign="top" 
+                  align="right" 
+                  iconType="circle"
+                  wrapperStyle={{ paddingBottom: '30px' }}
+                />
+                {selectedMetrics.map((metricId) => {
+                  const config = METRIC_CONFIG.find(c => c.id === metricId);
+                  return (
+                    <Line
+                      key={metricId}
+                      type="monotone"
+                      dataKey={metricId}
+                      name={config?.label}
+                      stroke={config?.color}
+                      strokeWidth={3}
+                      dot={{ r: 4, fill: config?.color, strokeWidth: 2, stroke: '#fff' }}
+                      activeDot={{ r: 6, strokeWidth: 0 }}
+                      animationDuration={1000}
+                    />
+                  );
+                })}
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <div className="border-b border-slate-100">
+            <div className="flex p-1 gap-1">
+              {[
+                { id: 'marketingPlan', label: '营销方案分析', icon: <Megaphone size={16} /> },
+                { id: 'keyword', label: '关键词分析', icon: <Search size={16} /> },
+                { id: 'link', label: '链接分析', icon: <LinkIcon size={16} /> },
+              ].map((tab) => (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
                   className={cn(
-                    "grid grid-cols-[100px_120px_1fr_100px] gap-4 items-center p-4 rounded-xl border transition-all cursor-pointer",
-                    isWarning 
-                      ? "bg-rose-50/30 border-rose-100 hover:bg-rose-50/50" 
-                      : "bg-white border-slate-100 hover:bg-slate-50"
+                    "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all",
+                    activeTab === tab.id 
+                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
+                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
                   )}
                 >
-                  <div className={cn("text-sm font-bold whitespace-nowrap", isWarning ? "text-rose-600" : "text-slate-600")}>
-                    {item.id}
-                  </div>
-                  <div className="text-sm font-bold text-indigo-600 whitespace-nowrap">
-                    ¥{item.spend.toLocaleString()}
-                  </div>
-                  <div className="flex items-center justify-center h-8 bg-slate-50/50 rounded-lg px-2 gap-0.5">
-                    <div className="flex-1 flex justify-end">
-                      <div 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLinkClick(item.id, 'spend');
-                        }}
-                        className="h-4 bg-indigo-500 rounded-l-sm hover:brightness-110 transition-all" 
-                        style={{ width: `${spendWidth}%` }}
-                      />
-                    </div>
-                    <div className="w-px h-6 bg-slate-200" />
-                    <div className="flex-1 flex justify-start">
-                      <div 
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          handleLinkClick(item.id, 'roi');
-                        }}
-                        className="h-4 bg-emerald-500 rounded-r-sm hover:brightness-110 transition-all" 
-                        style={{ width: `${roiWidth}%` }}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center justify-end gap-2">
-                    <span className={cn("text-sm font-bold", isWarning ? "text-rose-600" : "text-emerald-600")}>
-                      {item.roi.toFixed(2)}
-                    </span>
-                    {isWarning && <AlertCircle size={14} className="text-rose-500" />}
-                  </div>
-                </div>
-              );
-            })}
+                  {tab.icon}
+                  {tab.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className="overflow-x-auto">
+            {activeTab === 'marketingPlan' && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">营销方案</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {marketingPlanData.map((row) => (
+                    <tr 
+                      key={row.id} 
+                      onClick={() => handleItemClick(row.id, row.planName)}
+                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.planName}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          "px-2.5 py-1 rounded-full text-[10px] font-bold",
+                          row.status === '优秀' ? "bg-emerald-50 text-emerald-600" :
+                          row.status === '良好' ? "bg-blue-50 text-blue-600" :
+                          row.status === '一般' ? "bg-amber-50 text-amber-600" :
+                          "bg-rose-50 text-rose-600"
+                        )}>
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {activeTab === 'keyword' && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">关键词</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗 (元)</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">建议操作</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {keywordAnalysisData.map((row) => (
+                    <tr 
+                      key={row.id} 
+                      onClick={() => handleItemClick(row.id, row.keyword)}
+                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.keyword}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4">
+                        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
+                          {row.action}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
+
+            {activeTab === 'link' && (
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-slate-50/50 border-b border-slate-100">
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">商品ID</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗 (元)</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">投入产出比 (ROI)</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-50">
+                  {linkAnalysisData.map((row) => (
+                    <tr 
+                      key={row.id} 
+                      onClick={() => handleItemClick(row.id, row.productId)}
+                      className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
+                    >
+                      <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.productId}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-emerald-600">{row.roi}</td>
+                      <td className="px-6 py-4">
+                        <span className={cn(
+                          "px-2.5 py-1 rounded-full text-[10px] font-bold",
+                          row.status === '优秀' ? "bg-emerald-50 text-emerald-600" :
+                          row.status === '良好' ? "bg-blue-50 text-blue-600" :
+                          row.status === '一般' ? "bg-amber-50 text-amber-600" :
+                          "bg-rose-50 text-rose-600"
+                        )}>
+                          {row.status}
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            )}
           </div>
         </div>
-      </div>
-        </>
       )}
     </div>
   );
