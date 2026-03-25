@@ -15,12 +15,12 @@ import {
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { 
-  generateMarketingPlanData, 
+  generateMarketingPlanData,
   generateKeywordAnalysisData, 
   generateLinkAnalysisData 
 } from '../mockData';
 import { 
-  MarketingPlanData, 
+  MarketingPlanData,
   KeywordAnalysisData, 
   LinkAnalysisData 
 } from '../types';
@@ -38,14 +38,14 @@ interface MarketingMetric {
 }
 
 const STORES = [
-  '7.阿里-义乌市益瑞康科技有限公司',
-  '9.阿里-义乌市青色贸易有限公司',
-  '66.阿里-义乌市起乾商贸有限公司',
-  '67.阿里-义乌市嘉述贸易有限公司',
-  '68.阿里-义乌市领阅贸易有限公司',
-  '阿里-义乌市数途贸易有限公司',
-  '阿里-义乌麦创科技有限公司',
-  '阿里-义乌氪创科技有限公司'
+  '益瑞康',
+  '青色',
+  '起乾',
+  '嘉述',
+  '领阅',
+  '数途',
+  '麦创',
+  '氪创'
 ];
 const PROMOTIONS = [
   '大客生意解决方案',
@@ -60,29 +60,6 @@ const PROMOTIONS = [
 ];
 
 // Mock data generator function
-const getMockData = (store: string, promotion: string, start: Date | null, end: Date | null) => {
-  // Use a seed based on store, promotion and dates to keep it somewhat stable but different
-  const seed = `${store}-${promotion}-${start?.getTime()}-${end?.getTime()}`;
-  const hash = seed.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
-  
-  const random = (min: number, max: number) => {
-    const x = Math.sin(hash) * 10000;
-    return min + (x - Math.floor(x)) * (max - min);
-  };
-
-  const metrics: MarketingMetric[] = [
-    { label: '消耗 (元)', value: `¥${Math.floor(random(100000, 200000)).toLocaleString()}`, trend: Number(random(-20, 30).toFixed(1)), icon: <DollarSign size={20} />, color: 'text-blue-600' },
-    { label: '展现数', value: Math.floor(random(500000, 1000000)).toLocaleString(), trend: Number(random(-5, 15).toFixed(1)), icon: <Eye size={20} />, color: 'text-indigo-600' },
-    { label: '点击数', value: Math.floor(random(10000, 20000)).toLocaleString(), trend: Number(random(-5, 20).toFixed(1)), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
-    { label: '点击率', value: `${random(1.5, 4.5).toFixed(2)}%`, trend: Number(random(-2, 5).toFixed(1)), icon: <TrendingUp size={20} />, color: 'text-orange-500' },
-    { label: '平均点击花费', value: `¥${random(5, 15).toFixed(2)}`, trend: Number(random(-5, 5).toFixed(1)), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
-    { label: '总询盘量', value: Math.floor(random(100, 500)).toLocaleString(), trend: Number(random(-10, 25).toFixed(1)), icon: <Target size={20} />, color: 'text-emerald-600' },
-    { label: '询盘成本', value: `¥${random(200, 800).toFixed(2)}`, trend: Number(random(-15, 10).toFixed(1)), icon: <DollarSign size={20} />, color: 'text-cyan-600' },
-  ];
-
-  return { metrics };
-};
-
 const getTrendData = (itemId: string, start: Date | null, end: Date | null) => {
   if (!start || !end) return [];
   
@@ -122,7 +99,7 @@ const METRIC_CONFIG = [
   { id: 'clicks', label: '点击数', color: '#3b82f6' },
   { id: 'ctr', label: '点击率 (%)', color: '#f59e0b' },
   { id: 'cpc', label: '平均点击花费', color: '#f43f5e' },
-  { id: 'inquiries', label: '总询盘量', color: '#8b5cf6' },
+  { id: 'inquiryConversionRate', label: '询盘转化率', color: '#8b5cf6' },
   { id: 'inquiryCost', label: '询盘成本', color: '#0891b2' },
 ];
 
@@ -130,7 +107,6 @@ export default function DigitalMarketingAnalysis() {
   const [selectedStore, setSelectedStore] = useState(STORES[0]);
   const [selectedPromotion, setSelectedPromotion] = useState(PROMOTIONS[0]);
   const [isStoreOpen, setIsStoreOpen] = useState(false);
-  const [isPromotionOpen, setIsPromotionOpen] = useState(false);
   
   // Date Picker State
   const [startDate, setStartDate] = useState<Date | null>(new Date(2026, 2, 11));
@@ -145,7 +121,6 @@ export default function DigitalMarketingAnalysis() {
 
   // Data State
   const [isLoading, setIsLoading] = useState(false);
-  const [data, setData] = useState(() => getMockData(STORES[0], PROMOTIONS[0], new Date(2026, 2, 11), new Date(2026, 2, 18)));
 
   // Trend View State
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -153,14 +128,12 @@ export default function DigitalMarketingAnalysis() {
   const [selectedMetrics, setSelectedMetrics] = useState<string[]>(['spend', 'clicks']);
 
   const storeRef = useRef<HTMLDivElement>(null);
-  const promotionRef = useRef<HTMLDivElement>(null);
 
   // Trigger data update when filters change
   useEffect(() => {
     setIsLoading(true);
     const timer = setTimeout(() => {
-      setData(getMockData(selectedStore, selectedPromotion, startDate, endDate));
-      setMarketingPlanData(generateMarketingPlanData(10));
+      setMarketingPlanData(generateMarketingPlanData());
       setKeywordAnalysisData(generateKeywordAnalysisData(15));
       setLinkAnalysisData(generateLinkAnalysisData(12));
       setIsLoading(false);
@@ -173,9 +146,6 @@ export default function DigitalMarketingAnalysis() {
     function handleClickOutside(event: MouseEvent) {
       if (storeRef.current && !storeRef.current.contains(event.target as Node)) {
         setIsStoreOpen(false);
-      }
-      if (promotionRef.current && !promotionRef.current.contains(event.target as Node)) {
-        setIsPromotionOpen(false);
       }
     }
     document.addEventListener('mousedown', handleClickOutside);
@@ -204,6 +174,43 @@ export default function DigitalMarketingAnalysis() {
         break;
     }
   };
+
+  const summaryMetrics = useMemo(() => {
+    const currentData = activeTab === 'marketingPlan' ? marketingPlanData : 
+                        activeTab === 'keyword' ? keywordAnalysisData : 
+                        linkAnalysisData;
+    
+    if (!currentData || currentData.length === 0) return [];
+
+    const totals = currentData.reduce((acc, curr) => ({
+      spend: acc.spend + curr.spend,
+      impressions: acc.impressions + curr.impressions,
+      clicks: acc.clicks + curr.clicks,
+      inquiries: acc.inquiries + curr.inquiries,
+    }), { spend: 0, impressions: 0, clicks: 0, inquiries: 0 });
+
+    const ctr = totals.impressions > 0 ? (totals.clicks / totals.impressions) * 100 : 0;
+    const cpc = totals.clicks > 0 ? totals.spend / totals.clicks : 0;
+    const inquiryCost = totals.inquiries > 0 ? totals.spend / totals.inquiries : 0;
+    const inquiryConversionRate = totals.clicks > 0 ? (totals.inquiries / totals.clicks) * 100 : 0;
+
+    // Use a hash of the data to generate stable random trends for mock feel
+    const hash = currentData.length + totals.spend;
+    const randomTrend = (seed: number) => {
+      const x = Math.sin(hash + seed) * 10000;
+      return Number((-10 + (x - Math.floor(x)) * 40).toFixed(1));
+    };
+
+    return [
+      { id: 'spend', label: '消耗 (元)', value: `¥${Math.floor(totals.spend).toLocaleString()}`, trend: randomTrend(1), icon: <DollarSign size={20} />, color: 'text-blue-600' },
+      { id: 'impressions', label: '展现数', value: totals.impressions.toLocaleString(), trend: randomTrend(2), icon: <Eye size={20} />, color: 'text-indigo-600' },
+      { id: 'clicks', label: '点击数', value: totals.clicks.toLocaleString(), trend: randomTrend(3), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
+      { id: 'ctr', label: '点击率', value: `${ctr.toFixed(2)}%`, trend: randomTrend(4), icon: <TrendingUp size={20} />, color: 'text-orange-500' },
+      { id: 'cpc', label: '平均点击花费', value: `¥${cpc.toFixed(2)}`, trend: randomTrend(5), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
+      { id: 'inquiryConversionRate', label: '询盘转化率', value: `${inquiryConversionRate.toFixed(2)}%`, trend: randomTrend(9), icon: <Target size={20} />, color: 'text-emerald-600' },
+      { id: 'inquiryCost', label: '询盘成本', value: `¥${inquiryCost.toFixed(2)}`, trend: randomTrend(10), icon: <DollarSign size={20} />, color: 'text-cyan-600' },
+    ];
+  }, [activeTab, marketingPlanData, keywordAnalysisData, linkAnalysisData]);
 
   const trendTitle = useMemo(() => {
     const prefix = activeTab === 'marketingPlan' ? '营销方案' : activeTab === 'keyword' ? '关键词' : '链接';
@@ -302,36 +309,47 @@ export default function DigitalMarketingAnalysis() {
           )}
         </div>
 
-        {/* Promotion Dropdown */}
-        <div className="relative" ref={promotionRef}>
-          <div 
-            onClick={() => setIsPromotionOpen(!isPromotionOpen)}
-            className="flex items-center gap-2 px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-100 transition-colors min-w-[140px]"
+        {/* Analysis Tabs - Moved here */}
+        <div className="flex items-center gap-2">
+          {/* Marketing Plan Tab */}
+          <button
+            onClick={() => {
+              setActiveTab('marketingPlan');
+            }}
+            className={cn(
+              "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border",
+              activeTab === 'marketingPlan' 
+                ? "bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm" 
+                : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+            )}
           >
-            <Megaphone size={16} className="text-slate-400" />
-            <span className="text-sm font-medium text-slate-700">{selectedPromotion}</span>
-            <ChevronDown size={14} className={cn("text-slate-400 transition-transform", isPromotionOpen && "rotate-180")} />
-          </div>
+            <Megaphone size={16} className={cn(activeTab === 'marketingPlan' ? "text-indigo-600" : "text-slate-400")} />
+            <span>营销方案分析</span>
+          </button>
 
-          {isPromotionOpen && (
-            <div className="absolute top-full left-0 mt-1 w-full bg-white border border-slate-200 rounded-lg shadow-lg z-50 py-1 overflow-hidden">
-              {PROMOTIONS.map((promo) => (
-                <div
-                  key={promo}
-                  onClick={() => {
-                    setSelectedPromotion(promo);
-                    setIsPromotionOpen(false);
-                  }}
-                  className={cn(
-                    "px-4 py-2 text-sm cursor-pointer transition-colors",
-                    selectedPromotion === promo ? "bg-indigo-600 text-white" : "text-slate-700 hover:bg-slate-50"
-                  )}
-                >
-                  {promo}
-                </div>
-              ))}
-            </div>
-          )}
+          {/* Keyword and Link Tabs */}
+          {[
+            { id: 'keyword', label: '关键词分析', icon: <Search size={16} /> },
+            { id: 'link', label: '链接分析', icon: <LinkIcon size={16} /> },
+          ].map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => {
+                setActiveTab(tab.id as any);
+              }}
+              className={cn(
+                "flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-medium transition-all border",
+                activeTab === tab.id 
+                  ? "bg-indigo-50 text-indigo-600 border-indigo-200 shadow-sm" 
+                  : "bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100"
+              )}
+            >
+              <div className={cn(activeTab === tab.id ? "text-indigo-600" : "text-slate-400")}>
+                {tab.icon}
+              </div>
+              {tab.label}
+            </button>
+          ))}
         </div>
 
         <div className="flex bg-slate-100 p-1 rounded-lg">
@@ -349,31 +367,33 @@ export default function DigitalMarketingAnalysis() {
           ))}
         </div>
 
-        <div className="relative z-50">
-          <DatePicker
-            selected={startDate}
-            onChange={(dates: [Date | null, Date | null]) => {
-              const [start, end] = dates;
-              setStartDate(start);
-              setEndDate(end);
-              if (start && end) {
-                setActivePreset('自定义');
-              }
-            }}
-            startDate={startDate}
-            endDate={endDate}
-            selectsRange
-            customInput={<CustomDateInput />}
-            dateFormat="yyyy/MM/dd"
-            popperPlacement="bottom-end"
-          />
-        </div>
+        {activePreset === '自定义' && (
+          <div className="relative z-50">
+            <DatePicker
+              selected={startDate}
+              onChange={(dates: [Date | null, Date | null]) => {
+                const [start, end] = dates;
+                setStartDate(start);
+                setEndDate(end);
+                if (start && end) {
+                  setActivePreset('自定义');
+                }
+              }}
+              startDate={startDate}
+              endDate={endDate}
+              selectsRange
+              customInput={<CustomDateInput />}
+              dateFormat="yyyy/MM/dd"
+              popperPlacement="bottom-end"
+            />
+          </div>
+        )}
       </div>
 
       {/* Metrics Grid */}
       {!selectedItemId && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
-          {data.metrics.map((metric, idx) => (
+          {summaryMetrics.map((metric, idx) => (
             <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
               <div className="flex items-center justify-between mb-3">
                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50", metric.color)}>
@@ -494,30 +514,6 @@ export default function DigitalMarketingAnalysis() {
         </div>
       ) : (
         <div className="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-          <div className="border-b border-slate-100">
-            <div className="flex p-1 gap-1">
-              {[
-                { id: 'marketingPlan', label: '营销方案分析', icon: <Megaphone size={16} /> },
-                { id: 'keyword', label: '关键词分析', icon: <Search size={16} /> },
-                { id: 'link', label: '链接分析', icon: <LinkIcon size={16} /> },
-              ].map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
-                  className={cn(
-                    "flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-bold transition-all",
-                    activeTab === tab.id 
-                      ? "bg-indigo-600 text-white shadow-lg shadow-indigo-200" 
-                      : "text-slate-500 hover:bg-slate-50 hover:text-slate-700"
-                  )}
-                >
-                  {tab.icon}
-                  {tab.label}
-                </button>
-              ))}
-            </div>
-          </div>
-
           <div className="overflow-x-auto">
             {activeTab === 'marketingPlan' && (
               <table className="w-full text-left border-collapse">
@@ -529,8 +525,12 @@ export default function DigitalMarketingAnalysis() {
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
                   </tr>
                 </thead>
@@ -547,8 +547,12 @@ export default function DigitalMarketingAnalysis() {
                       <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
                       <td className="px-6 py-4">
                         <span className={cn(
                           "px-2.5 py-1 rounded-full text-[10px] font-bold",
@@ -576,8 +580,12 @@ export default function DigitalMarketingAnalysis() {
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">建议操作</th>
                   </tr>
                 </thead>
@@ -594,8 +602,12 @@ export default function DigitalMarketingAnalysis() {
                       <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
                       <td className="px-6 py-4">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
                           {row.action}
@@ -617,8 +629,12 @@ export default function DigitalMarketingAnalysis() {
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
+                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">投入产出比 (ROI)</th>
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
                   </tr>
@@ -636,8 +652,12 @@ export default function DigitalMarketingAnalysis() {
                       <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
                       <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
                       <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
+                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
                       <td className="px-6 py-4 text-sm font-bold text-emerald-600">{row.roi}</td>
                       <td className="px-6 py-4">
                         <span className={cn(

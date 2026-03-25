@@ -4,24 +4,29 @@ import {
 } from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
 
-export const generateMarketingPlanData = (count: number = 10): MarketingPlanData[] => {
+export const generateMarketingPlanData = (): MarketingPlanData[] => {
   const plans = ['大客生意解决方案', '首位展示', '定位推广', '搜索展播', '品牌专区', '全站推店', '全站销货', '精准获客', '关键词卡位'];
   const statuses: ('优秀' | '良好' | '一般' | '待优化')[] = ['优秀', '良好', '一般', '待优化'];
   
-  return Array.from({ length: count }).map((_, i) => {
+  return plans.map((plan, i) => {
     const spend = Math.floor(Math.random() * 50000) + 5000;
     const clicks = Math.floor(Math.random() * 2000) + 100;
     const inquiries = Math.floor(Math.random() * 50) + 5;
+    const leads = Math.floor(inquiries * (0.3 + Math.random() * 0.4));
     return {
       id: `plan-${i}`,
-      planName: plans[i % plans.length],
+      planName: plan,
       spend,
       impressions: Math.floor(spend * (10 + Math.random() * 5)),
       clicks,
       ctr: Number((clicks / (spend * 10) * 100).toFixed(2)),
       cpc: Number((spend / clicks).toFixed(2)),
+      leads,
+      leadConversionRate: Number((leads / clicks * 100).toFixed(2)),
+      leadCost: Number((spend / leads).toFixed(2)),
       inquiries,
       inquiryCost: Number((spend / inquiries).toFixed(2)),
+      inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
       status: statuses[Math.floor(Math.random() * statuses.length)]
     };
   });
@@ -33,6 +38,7 @@ export const generateKeywordAnalysisData = (count: number = 15): KeywordAnalysis
   return Array.from({ length: count }).map((_, i) => {
     const spend = Math.floor(Math.random() * 10000) + 1000;
     const clicks = Math.floor(Math.random() * 500) + 50;
+    const leads = Math.floor(Math.random() * 30) + 2;
     const inquiries = Math.floor(Math.random() * 20) + 1;
     return {
       id: `kw-${i}`,
@@ -42,8 +48,12 @@ export const generateKeywordAnalysisData = (count: number = 15): KeywordAnalysis
       clicks,
       ctr: Number((clicks / (spend * 15) * 100).toFixed(2)),
       cpc: Number((spend / clicks).toFixed(2)),
+      leads,
+      leadConversionRate: Number((leads / clicks * 100).toFixed(2)),
+      leadCost: Number((spend / leads).toFixed(2)),
       inquiries,
       inquiryCost: Number((spend / inquiries).toFixed(2)),
+      inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
       action: actions[Math.floor(Math.random() * actions.length)]
     };
   });
@@ -54,6 +64,7 @@ export const generateLinkAnalysisData = (count: number = 12): LinkAnalysisData[]
   return Array.from({ length: count }).map((_, i) => {
     const spend = Math.floor(Math.random() * 20000) + 2000;
     const clicks = Math.floor(Math.random() * 800) + 80;
+    const leads = Math.floor(Math.random() * 50) + 5;
     const inquiries = Math.floor(Math.random() * 40) + 2;
     return {
       id: `link-${i}`,
@@ -63,8 +74,12 @@ export const generateLinkAnalysisData = (count: number = 12): LinkAnalysisData[]
       clicks,
       ctr: Number((clicks / (spend * 12) * 100).toFixed(2)),
       cpc: Number((spend / clicks).toFixed(2)),
+      leads,
+      leadConversionRate: Number((leads / clicks * 100).toFixed(2)),
+      leadCost: Number((spend / leads).toFixed(2)),
       inquiries,
       inquiryCost: Number((spend / inquiries).toFixed(2)),
+      inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
       roi: Number((2 + Math.random() * 5).toFixed(2)),
       status: statuses[Math.floor(Math.random() * statuses.length)]
     };

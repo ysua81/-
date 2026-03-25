@@ -86,8 +86,12 @@ export interface MarketingPlanData {
   clicks: number; // 点击数
   ctr: number; // 点击率
   cpc: number; // 平均点击花费
+  leads: number; // 线索量
+  leadConversionRate: number; // 线索转化率
+  leadCost: number; // 线索成本
   inquiries: number; // 总询盘量
   inquiryCost: number; // 询盘成本
+  inquiryConversionRate: number; // 询盘转化率
   status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
 }
 
@@ -99,8 +103,12 @@ export interface KeywordAnalysisData {
   clicks: number; // 点击数
   ctr: number; // 点击率
   cpc: number; // 平均点击花费
+  leads: number; // 线索量
+  leadConversionRate: number; // 线索转化率
+  leadCost: number; // 线索成本
   inquiries: number; // 总询盘量
   inquiryCost: number; // 询盘成本
+  inquiryConversionRate: number; // 询盘转化率
   action: string; // 建议操作
 }
 
@@ -112,8 +120,12 @@ export interface LinkAnalysisData {
   clicks: number; // 点击数
   ctr: number; // 点击率
   cpc: number; // 平均点击花费
+  leads: number; // 线索量
+  leadConversionRate: number; // 线索转化率
+  leadCost: number; // 线索成本
   inquiries: number; // 总询盘量
   inquiryCost: number; // 询盘成本
+  inquiryConversionRate: number; // 询盘转化率
   roi: number; // 投入产出比
   status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
 }
