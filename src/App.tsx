@@ -1118,7 +1118,7 @@ export default function App() {
 
   const [selectedDimensionId, setSelectedDimensionId] = useState('storeName');
   const [selectedFilterValue, setSelectedFilterValue] = useState<string | null>(null);
-  const [dashboardDimensionId, setDashboardDimensionId] = useState('platform');
+  const [dashboardDimensionId, setDashboardDimensionId] = useState('all');
   const [dashboardFilterValue, setDashboardFilterValue] = useState<string | null>(null);
   const [dashboardSearchQuery, setDashboardSearchQuery] = useState('');
   const [isDashboardFilterOpen, setIsDashboardFilterOpen] = useState(false);
@@ -1133,6 +1133,7 @@ export default function App() {
   ];
 
   const dashboardDimensions = [
+    { id: 'all', label: '全部' },
     { id: 'platform', label: '客户销售渠道' },
     { id: 'customerType', label: '新老客' },
     { id: 'isWholesale', label: '销售类型' },
@@ -1141,6 +1142,11 @@ export default function App() {
   ];
 
   const dashboardHierarchy = [
+    {
+      id: 'all',
+      label: '全部',
+      children: []
+    },
     {
       id: 'platform',
       label: '客户销售渠道',
@@ -1442,7 +1448,14 @@ export default function App() {
         
         // Initialize groups with all possible keys to ensure they appear in the table even with 0 data
         // If a specific value is filtered, we only show that one
-        if (dashboardFilterValue) {
+        if (dim.id === 'all') {
+          if (selectedDimensionId === 'category' || selectedDimensionId === 'position') {
+            // Dynamic breakdown for category/position when in 'All' tab
+          } else {
+            const key = selectedFilterValue || '全部';
+            groups[key] = [];
+          }
+        } else if (dashboardFilterValue) {
           groups[dashboardFilterValue] = [];
         } else {
           allKeys.forEach(key => {
@@ -1452,7 +1465,30 @@ export default function App() {
 
         subset.forEach(d => {
           let key = '';
-          if (dim.id === 'isWholesale') {
+          if (dim.id === 'all') {
+            if (selectedDimensionId === 'category') {
+              const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+              let val = '';
+              if (path.length === 0) val = d.categoryL1;
+              else if (path.length === 1) val = d.categoryL2;
+              else if (path.length === 2) val = d.categoryL3;
+              else val = d.categoryL4;
+              key = selectedFilterValue ? `${selectedFilterValue} > ${val}` : val;
+            } else if (selectedDimensionId === 'position') {
+              const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+              if (path.length === 0) {
+                key = d.businessOwner ? '业务' : '销售';
+              } else if (path.length === 1) {
+                const type = path[0];
+                const val = type === '业务' ? d.businessOwner : d.salesperson;
+                key = `${selectedFilterValue} > ${val}`;
+              } else {
+                key = selectedFilterValue;
+              }
+            } else {
+              key = selectedFilterValue || '全部';
+            }
+          } else if (dim.id === 'isWholesale') {
             key = d.isWholesale;
           } else if (dim.id === 'customerType') {
             key = d.customerType === 'New' ? '新客' : '老客';
@@ -1468,7 +1504,7 @@ export default function App() {
           
           if (groups[key]) {
             groups[key].push(d);
-          } else if (!dashboardFilterValue && key) {
+          } else if ((!dashboardFilterValue || dim.id === 'all') && key) {
             // Catch-all for values not in hierarchy if no filter is active
             groups[key] = [d];
           }
@@ -1508,7 +1544,7 @@ export default function App() {
           breakdown
         };
       });
-  }, [filteredData, dashboardDimensionId, dashboardFilterValue, selectedMetric, tableSortConfig]);
+  }, [filteredData, dashboardDimensionId, dashboardFilterValue, selectedMetric, tableSortConfig, selectedDimensionId, selectedFilterValue]);
 
   const processedCompetitiveData = useMemo(() => {
     let result = competitiveData;
@@ -1719,7 +1755,7 @@ export default function App() {
                         }}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
                       >
-                        <span className="truncate">{selectedFilterValue || '选择类目'}</span>
+                        <span className="truncate">{selectedFilterValue || '全部类目'}</span>
                         <ChevronDown size={14} className="text-slate-400" />
                       </button>
 
@@ -1771,12 +1807,24 @@ export default function App() {
                             <div className="flex h-80">
                               {/* L1 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                <button
+                                  onClick={() => {
+                                    setSelectedFilterValue(null);
+                                    setCategoryFilterPath([]);
+                                    setIsCategoryFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    !selectedFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  全部类目
+                                </button>
                                 {Object.keys(categories).map(l1 => (
                                   <button
                                     key={l1}
                                     onClick={() => {
                                       setCategoryFilterPath([l1]);
-                                      setSelectedFilterValue(l1);
                                     }}
                                     onDoubleClick={() => {
                                       setCategoryFilterPath([l1]);
@@ -1794,12 +1842,25 @@ export default function App() {
                               </div>
                               {/* L2 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                <button
+                                  onClick={() => {
+                                    const val = categoryFilterPath[0] || null;
+                                    setSelectedFilterValue(val);
+                                    setCategoryFilterPath(categoryFilterPath[0] ? [categoryFilterPath[0]] : []);
+                                    setIsCategoryFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    selectedFilterValue === (categoryFilterPath[0] || null) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  全部类目
+                                </button>
                                 {categoryFilterPath[0] && Object.keys(categories[categoryFilterPath[0]]).map(l2 => (
                                   <button
                                     key={l2}
                                     onClick={() => {
                                       setCategoryFilterPath([categoryFilterPath[0], l2]);
-                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${l2}`);
                                     }}
                                     onDoubleClick={() => {
                                       setCategoryFilterPath([categoryFilterPath[0], l2]);
@@ -1817,12 +1878,27 @@ export default function App() {
                               </div>
                               {/* L3 */}
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                                <button
+                                  onClick={() => {
+                                    const path = categoryFilterPath[1] 
+                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}`
+                                      : (categoryFilterPath[0] || null);
+                                    setSelectedFilterValue(path);
+                                    setCategoryFilterPath(categoryFilterPath[1] ? [categoryFilterPath[0], categoryFilterPath[1]] : (categoryFilterPath[0] ? [categoryFilterPath[0]] : []));
+                                    setIsCategoryFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    selectedFilterValue === (categoryFilterPath[1] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` : (categoryFilterPath[0] || null)) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  全部类目
+                                </button>
                                 {categoryFilterPath[1] && Object.keys(categories[categoryFilterPath[0]][categoryFilterPath[1]]).map(l3 => (
                                   <button
                                     key={l3}
                                     onClick={() => {
                                       setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3]);
-                                      setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${l3}`);
                                     }}
                                     onDoubleClick={() => {
                                       setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], l3]);
@@ -1840,6 +1916,24 @@ export default function App() {
                               </div>
                               {/* L4 */}
                               <div className="w-1/4 p-2 overflow-y-auto">
+                                <button
+                                  onClick={() => {
+                                    const path = categoryFilterPath[2]
+                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]}`
+                                      : (categoryFilterPath[1] 
+                                          ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` 
+                                          : (categoryFilterPath[0] || null));
+                                    setSelectedFilterValue(path);
+                                    setCategoryFilterPath(categoryFilterPath[2] ? [categoryFilterPath[0], categoryFilterPath[1], categoryFilterPath[2]] : (categoryFilterPath[1] ? [categoryFilterPath[0], categoryFilterPath[1]] : (categoryFilterPath[0] ? [categoryFilterPath[0]] : [])));
+                                    setIsCategoryFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    selectedFilterValue === (categoryFilterPath[2] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]}` : (categoryFilterPath[1] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` : (categoryFilterPath[0] || null))) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  全部类目
+                                </button>
                                 {categoryFilterPath[2] && (categories[categoryFilterPath[0]][categoryFilterPath[1]][categoryFilterPath[2]] as string[]).map(l4 => (
                                   <button
                                     key={l4}
@@ -1870,33 +1964,61 @@ export default function App() {
                         }}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
                       >
-                        <span className="truncate">{selectedFilterValue || '选择岗位'}</span>
+                        <span className="truncate">{selectedFilterValue || '全部岗位'}</span>
                         <ChevronDown size={14} className="text-slate-400" />
                       </button>
 
                       {isPositionFilterOpen && (
                         <div className="absolute top-full left-0 mt-2 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] flex flex-col min-w-[300px] animate-in fade-in slide-in-from-top-2 duration-200">
                           <div className="flex h-64">
-                            {/* Type */}
-                            <div className="w-1/2 border-r border-slate-100 p-2 overflow-y-auto">
-                              {Object.keys(positions).map(type => (
+                              {/* Type */}
+                              <div className="w-1/2 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
-                                  key={type}
                                   onClick={() => {
-                                    setPositionFilterPath([type]);
-                                    setSelectedFilterValue(type);
+                                    setSelectedFilterValue(null);
+                                    setIsPositionFilterOpen(false);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                    positionFilterPath[0] === type ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    !selectedFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  {type}
+                                  全部岗位
                                 </button>
-                              ))}
-                            </div>
+                                {Object.keys(positions).map(type => (
+                                  <button
+                                    key={type}
+                                    onClick={() => {
+                                      setPositionFilterPath([type]);
+                                    }}
+                                    onDoubleClick={() => {
+                                      setPositionFilterPath([type]);
+                                      setSelectedFilterValue(type);
+                                      setIsPositionFilterOpen(false);
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                      positionFilterPath[0] === type ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    {type}
+                                  </button>
+                                ))}
+                              </div>
                             {/* Name */}
                             <div className="w-1/2 p-2 overflow-y-auto">
+                              <button
+                                onClick={() => {
+                                  setSelectedFilterValue(positionFilterPath[0] || null);
+                                  setIsPositionFilterOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                  selectedFilterValue === (positionFilterPath[0] || null) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                )}
+                              >
+                                全部岗位
+                              </button>
                               {positionFilterPath[0] && (positions as any)[positionFilterPath[0]].map((name: string) => (
                                 <button
                                   key={name}
@@ -2020,98 +2142,100 @@ export default function App() {
                   </div>
 
                   <div className="flex items-center gap-4">
-                    <div className="relative">
-                      <button 
-                        onClick={() => setIsDashboardFilterOpen(!isDashboardFilterOpen)}
-                        className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold transition-all text-slate-700 shadow-sm hover:border-indigo-300"
-                      >
-                        <Filter size={14} className="text-slate-400" />
-                        <span>{dashboardFilterValue || '全部' + dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
-                        <ChevronDown size={14} className="ml-1 opacity-50" />
-                      </button>
+                    {dashboardDimensionId !== 'all' && (
+                      <div className="relative">
+                        <button 
+                          onClick={() => setIsDashboardFilterOpen(!isDashboardFilterOpen)}
+                          className="flex items-center gap-2 px-4 py-2 bg-white border border-slate-200 rounded-xl text-xs font-bold transition-all text-slate-700 shadow-sm hover:border-indigo-300"
+                        >
+                          <Filter size={14} className="text-slate-400" />
+                          <span>{dashboardFilterValue || '全部' + dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
+                          <ChevronDown size={14} className="ml-1 opacity-50" />
+                        </button>
 
-                      {isDashboardFilterOpen && (
-                        <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
-                          <div className="p-3 border-b border-slate-50">
-                            <div className="flex items-center justify-between mb-2">
-                              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">筛选{dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
-                              {dashboardFilterValue && (
-                                <button 
-                                  onClick={() => {
-                                    setDashboardFilterValue(null);
-                                    setIsDashboardFilterOpen(false);
-                                  }}
-                                  className="text-[10px] text-indigo-600 hover:underline"
-                                >
-                                  重置
-                                </button>
+                        {isDashboardFilterOpen && (
+                          <div className="absolute top-full left-0 mt-2 w-64 bg-white border border-slate-200 rounded-xl shadow-2xl z-[100] animate-in fade-in slide-in-from-top-2 duration-200 overflow-hidden">
+                            <div className="p-3 border-b border-slate-50">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">筛选{dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.label}</span>
+                                {dashboardFilterValue && (
+                                  <button 
+                                    onClick={() => {
+                                      setDashboardFilterValue(null);
+                                      setIsDashboardFilterOpen(false);
+                                    }}
+                                    className="text-[10px] text-indigo-600 hover:underline"
+                                  >
+                                    重置
+                                  </button>
+                                )}
+                              </div>
+                              {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.searchable && (
+                                <div className="relative">
+                                  <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
+                                  <input 
+                                    type="text"
+                                    placeholder="搜索..."
+                                    className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
+                                    autoFocus
+                                    onChange={(e) => setDashboardSearchQuery(e.target.value)}
+                                    value={dashboardSearchQuery}
+                                  />
+                                </div>
                               )}
                             </div>
-                            {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.searchable && (
-                              <div className="relative">
-                                <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400" />
-                                <input 
-                                  type="text"
-                                  placeholder="搜索..."
-                                  className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-100 rounded-lg text-[10px] focus:outline-none focus:ring-2 focus:ring-indigo-500/10"
-                                  autoFocus
-                                  onChange={(e) => setDashboardSearchQuery(e.target.value)}
-                                  value={dashboardSearchQuery}
-                                />
-                              </div>
-                            )}
+                            <div className="max-h-64 overflow-y-auto p-1">
+                              <button
+                                onClick={() => {
+                                  setDashboardFilterValue(null);
+                                  setIsDashboardFilterOpen(false);
+                                }}
+                                className={cn(
+                                  "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all",
+                                  !dashboardFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                )}
+                              >
+                                全部
+                              </button>
+                              {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.children
+                                .filter(child => !dashboardSearchQuery || child.toLowerCase().includes(dashboardSearchQuery.toLowerCase()))
+                                .map(child => (
+                                  <button
+                                    key={child}
+                                    onClick={() => {
+                                      setDashboardFilterValue(child);
+                                      setIsDashboardFilterOpen(false);
+                                      setDashboardSearchQuery('');
+                                    }}
+                                    className={cn(
+                                      "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between",
+                                      dashboardFilterValue === child ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                    )}
+                                  >
+                                    <span>{child}</span>
+                                    {dashboardDimensionId === 'distributorId' && DISTRIBUTOR_GRADES[child] && (
+                                      <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                                        dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", DISTRIBUTOR_GRADES[child].color)
+                                      )}>
+                                        {DISTRIBUTOR_GRADES[child].label}
+                                      </span>
+                                    )}
+                                    {dashboardDimensionId === 'grade' && GRADE_COLORS[child] && (
+                                      <span className={cn(
+                                        "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
+                                        dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", GRADE_COLORS[child])
+                                      )}>
+                                        {child}
+                                      </span>
+                                    )}
+                                  </button>
+                                ))}
+                            </div>
                           </div>
-                          <div className="max-h-64 overflow-y-auto p-1">
-                            <button
-                              onClick={() => {
-                                setDashboardFilterValue(null);
-                                setIsDashboardFilterOpen(false);
-                              }}
-                              className={cn(
-                                "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all",
-                                !dashboardFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
-                              )}
-                            >
-                              全部
-                            </button>
-                            {dashboardHierarchy.find(h => h.id === dashboardDimensionId)?.children
-                              .filter(child => !dashboardSearchQuery || child.toLowerCase().includes(dashboardSearchQuery.toLowerCase()))
-                              .map(child => (
-                                <button
-                                  key={child}
-                                  onClick={() => {
-                                    setDashboardFilterValue(child);
-                                    setIsDashboardFilterOpen(false);
-                                    setDashboardSearchQuery('');
-                                  }}
-                                  className={cn(
-                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-all flex items-center justify-between",
-                                    dashboardFilterValue === child ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
-                                  )}
-                                >
-                                  <span>{child}</span>
-                                  {dashboardDimensionId === 'distributorId' && DISTRIBUTOR_GRADES[child] && (
-                                    <span className={cn(
-                                      "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
-                                      dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", DISTRIBUTOR_GRADES[child].color)
-                                    )}>
-                                      {DISTRIBUTOR_GRADES[child].label}
-                                    </span>
-                                  )}
-                                  {dashboardDimensionId === 'grade' && GRADE_COLORS[child] && (
-                                    <span className={cn(
-                                      "px-1.5 py-0.5 rounded text-[8px] font-bold uppercase",
-                                      dashboardFilterValue === child ? "bg-white/20 text-white" : cn("text-white", GRADE_COLORS[child])
-                                    )}>
-                                      {child}
-                                    </span>
-                                  )}
-                                </button>
-                              ))}
-                          </div>
-                        </div>
-                      )}
-                    </div>
+                        )}
+                      </div>
+                    )}
 
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" size={14} />
@@ -2178,7 +2302,16 @@ export default function App() {
                             return (
                               <tr 
                                 key={item.id}
-                                onClick={() => setSelectedFilterValue(isSelected ? null : item.id)}
+                                onClick={() => {
+                                  if (isSelected) {
+                                    setSelectedFilterValue(null);
+                                  } else {
+                                    setSelectedFilterValue(item.id);
+                                    if (dim.id !== 'all') {
+                                      setSelectedDimensionId(dim.id);
+                                    }
+                                  }
+                                }}
                                 className={cn(
                                   "group transition-all cursor-pointer border-b border-slate-100 last:border-0",
                                   isSelected ? "bg-indigo-50/80" : "hover:bg-slate-50"
@@ -2192,7 +2325,7 @@ export default function App() {
                                         "text-sm font-medium transition-colors",
                                         isSelected ? "text-indigo-700 font-bold" : "text-slate-600 group-hover:text-slate-900"
                                       )}>
-                                        {item.id}
+                                        {item.id.includes(' > ') ? item.id.split(' > ').pop() : item.id}
                                       </span>
                                       {dim.id === 'distributorId' && DISTRIBUTOR_GRADES[item.id] && (
                                         <span className={cn(
