@@ -1239,6 +1239,7 @@ export default function App() {
           if (path.length === 2) return d.categoryL1 === path[0];
           if (path.length === 3) return d.categoryL1 === path[0] && d.categoryL2 === path[1];
           if (path.length === 4) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2];
+          if (path.length === 5) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2] && d.categoryL4 === path[3];
           return true;
         }
         if (path.length === 1) return d.categoryL1 === path[0];
@@ -1467,7 +1468,22 @@ export default function App() {
             const effectivePath = path.filter(p => !p.startsWith('全部'));
             const level = effectivePath.length;
             
-            if (level === 0) {
+            if (selectedFilterValue?.endsWith('全部SKU')) {
+              categoryTree.forEach(c => {
+                const match = 
+                  (level === 0) ||
+                  (level === 1 && c.l1 === effectivePath[0]) ||
+                  (level === 2 && c.l1 === effectivePath[0] && c.l2 === effectivePath[1]) ||
+                  (level === 3 && c.l1 === effectivePath[0] && c.l2 === effectivePath[1] && c.l3 === effectivePath[2]) ||
+                  (level === 4 && c.l1 === effectivePath[0] && c.l2 === effectivePath[1] && c.l3 === effectivePath[2] && c.l4 === effectivePath[3]);
+                
+                if (match) {
+                  c.skus.forEach(sku => {
+                    groups[`${c.l1} > ${c.l2} > ${c.l3} > ${c.l4} > ${sku}`] = [];
+                  });
+                }
+              });
+            } else if (level === 0) {
               if (selectedFilterValue === '全部二级类目') {
                 Object.keys(categories).forEach(l1 => {
                   Object.keys(categories[l1] || {}).forEach(l2 => {
@@ -1580,13 +1596,16 @@ export default function App() {
                 if (selectedFilterValue === '全部二级类目') key = `${d.categoryL1} > ${d.categoryL2}`;
                 else if (selectedFilterValue === '全部三级类目') key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
                 else if (selectedFilterValue === '全部四级类目') key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+                else if (selectedFilterValue === '全部SKU') key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4} > ${d.sku}`;
                 else key = d.categoryL1;
               } else if (level === 1) {
-                key = `${d.categoryL1} > ${d.categoryL2}`;
+                if (selectedFilterValue?.endsWith('全部SKU')) key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4} > ${d.sku}`;
+                else key = `${d.categoryL1} > ${d.categoryL2}`;
               } else if (level === 2) {
-                key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
+                if (selectedFilterValue?.endsWith('全部SKU')) key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4} > ${d.sku}`;
+                else key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
               } else {
-                if (level === 4 || level === 5) {
+                if (level === 4 || level === 5 || selectedFilterValue?.endsWith('全部SKU')) {
                   key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4} > ${d.sku}`;
                 } else {
                   key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
@@ -2090,6 +2109,25 @@ export default function App() {
                               </div>
                               {/* SKU */}
                               <div className="w-1/5 p-2 overflow-y-auto">
+                                <button
+                                  onClick={() => {
+                                    const val = categoryFilterPath[3]
+                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > ${categoryFilterPath[3]} > 全部SKU`
+                                      : (categoryFilterPath[2]
+                                          ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > 全部SKU`
+                                          : (categoryFilterPath[1]
+                                              ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > 全部SKU`
+                                              : (categoryFilterPath[0] ? `${categoryFilterPath[0]} > 全部SKU` : "全部SKU")));
+                                    setSelectedFilterValue(val);
+                                    setIsCategoryFilterOpen(false);
+                                  }}
+                                  className={cn(
+                                    "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                    selectedFilterValue?.endsWith('全部SKU') ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                  )}
+                                >
+                                  全部SKU
+                                </button>
                                 {categoryFilterPath[3] && (() => {
                                   const match = categoryTree.find(c => c.l1 === categoryFilterPath[0] && c.l2 === categoryFilterPath[1] && c.l3 === categoryFilterPath[2] && c.l4 === categoryFilterPath[3]);
                                   const skus = match?.skus || ['标准款', '升级款'];
@@ -2423,7 +2461,7 @@ export default function App() {
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
                       <SortableHeader 
-                        label={selectedDimensionId === 'category' && (selectedFilterValue?.split(' > ').filter(p => !p.startsWith('全部')).length >= 4) ? 'SKU' : '细分项'} 
+                        label={selectedDimensionId === 'category' && (selectedFilterValue?.endsWith('全部SKU') || selectedFilterValue?.split(' > ').filter(p => !p.startsWith('全部')).length >= 4) ? 'SKU' : '细分项'} 
                         sortKey="id" 
                         currentSort={tableSortConfig} 
                         onSort={handleTableSort} 
