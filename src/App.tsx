@@ -19,7 +19,7 @@ import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
 import { SalesRecord, CompetitiveProduct } from './types';
-import { generateMockData, generateCompetitiveData, storeAttributions, POSITIONS_DATA } from './mockData';
+import { generateMockData, generateCompetitiveData, storeAttributions, POSITIONS_DATA, categoryTree } from './mockData';
 import StrategicMap from './components/StrategicMap';
 import DigitalMarketingAnalysis from './components/DigitalMarketingAnalysis';
 
@@ -1184,6 +1184,8 @@ export default function App() {
       setSelectedFilterValue('全部店铺');
     } else if (selectedDimensionId === 'category') {
       setSelectedFilterValue('全部一级类目');
+    } else if (selectedDimensionId === 'position') {
+      setSelectedFilterValue('全部岗位');
     } else {
       setSelectedFilterValue(null);
     }
@@ -1219,7 +1221,7 @@ export default function App() {
 
     result = result.filter(d => isWithinInterval(parseISO(d.date), { start, end }));
 
-    if (!selectedFilterValue || selectedFilterValue === '全部店铺' || selectedFilterValue === '全部一级类目') return result;
+    if (!selectedFilterValue || selectedFilterValue === '全部店铺' || selectedFilterValue === '全部一级类目' || selectedFilterValue === '全部岗位') return result;
     
     return result.filter(d => {
       if (selectedDimensionId === 'position') {
@@ -1243,6 +1245,7 @@ export default function App() {
         if (path.length === 2) return d.categoryL1 === path[0] && d.categoryL2 === path[1];
         if (path.length === 3) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2];
         if (path.length === 4) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2] && d.categoryL4 === path[3];
+        if (path.length === 5) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2] && d.categoryL4 === path[3] && d.sku === path[4];
         return true;
       }
       if (['distributorId'].includes(selectedDimensionId)) {
@@ -1509,24 +1512,50 @@ export default function App() {
               (categories[effectivePath[0]]?.[effectivePath[1]]?.[effectivePath[2]] || []).forEach(val => {
                 groups[`${prefix} > ${val}`] = [];
               });
+            } else if (level === 4) {
+              const prefix = effectivePath.join(' > ');
+              const match = categoryTree.find(c => c.l1 === effectivePath[0] && c.l2 === effectivePath[1] && c.l3 === effectivePath[2] && c.l4 === effectivePath[3]);
+              const skus = match?.skus || ['标准款', '升级款'];
+              skus.forEach(sku => {
+                groups[`${prefix} > ${sku}`] = [];
+              });
+            } else if (level === 5) {
+              const prefix = effectivePath.join(' > ');
+              groups[prefix] = [];
+            }
+          } else if (selectedDimensionId === 'storeName') {
+            if (selectedFilterValue === '全部店铺') {
+              stores.forEach(store => {
+                groups[store] = [];
+              });
+            } else {
+              groups[selectedFilterValue || '全部'] = [];
             }
           } else if (selectedDimensionId === 'position') {
-            const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
-            const effectivePath = path.filter(p => !p.startsWith('全部'));
-            const level = effectivePath.length;
-            
-            let currentLevelKeys: string[] = [];
-            if (level === 0) {
-              currentLevelKeys = Object.keys(positions);
-            } else if (level === 1) {
-              currentLevelKeys = positions[effectivePath[0]] || [];
+            if (selectedFilterValue === '全部岗位') {
+              Object.keys(positions).forEach(type => {
+                positions[type].forEach(name => {
+                  groups[`${type} > ${name}`] = [];
+                });
+              });
+            } else {
+              const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+              const effectivePath = path.filter(p => !p.startsWith('全部'));
+              const level = effectivePath.length;
+              
+              let currentLevelKeys: string[] = [];
+              if (level === 0) {
+                currentLevelKeys = Object.keys(positions);
+              } else if (level === 1) {
+                currentLevelKeys = positions[effectivePath[0]] || [];
+              }
+              
+              const prefix = effectivePath.join(' > ');
+              currentLevelKeys.forEach(val => {
+                const key = prefix ? `${prefix} > ${val}` : val;
+                groups[key] = [];
+              });
             }
-            
-            const prefix = effectivePath.join(' > ');
-            currentLevelKeys.forEach(val => {
-              const key = prefix ? `${prefix} > ${val}` : val;
-              groups[key] = [];
-            });
           } else {
             const key = selectedFilterValue || '全部';
             groups[key] = [];
@@ -1557,18 +1586,31 @@ export default function App() {
               } else if (level === 2) {
                 key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
               } else {
-                key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+                if (level === 4 || level === 5) {
+                  key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4} > ${d.sku}`;
+                } else {
+                  key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+                }
               }
+            } else if (selectedDimensionId === 'storeName') {
+              key = d.storeName;
             } else if (selectedDimensionId === 'position') {
-              const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
-              if (path.length === 0) {
-                key = d.businessOwner ? '业务' : '销售';
-              } else if (path.length === 1) {
-                const type = path[0];
-                const val = type === '业务' ? d.businessOwner : d.salesperson;
-                key = `${selectedFilterValue} > ${val}`;
+              if (selectedFilterValue === '全部岗位') {
+                key = d.businessOwner ? `业务 > ${d.businessOwner}` : `销售 > ${d.salesperson}`;
               } else {
-                key = selectedFilterValue;
+                const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+                const effectivePath = path.filter(p => !p.startsWith('全部'));
+                const level = effectivePath.length;
+                
+                if (level === 0) {
+                  key = d.businessOwner ? '业务' : '销售';
+                } else if (level === 1) {
+                  const type = effectivePath[0];
+                  const val = type === '业务' ? d.businessOwner : d.salesperson;
+                  key = `${type} > ${val}`;
+                } else {
+                  key = selectedFilterValue || '';
+                }
               }
             } else {
               key = selectedFilterValue || '全部';
@@ -1872,6 +1914,11 @@ export default function App() {
                                     if (l3.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2} > ${l3}`, label: l3 });
                                     l4s.forEach((l4: string) => {
                                       if (l4.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2} > ${l3} > ${l4}`, label: l4 });
+                                      const match = categoryTree.find(c => c.l1 === l1 && c.l2 === l2 && c.l3 === l3 && c.l4 === l4);
+                                      const skus = match?.skus || ['标准款', '升级款'];
+                                      skus.forEach(sku => {
+                                        if (sku.includes(categorySearchQuery)) results.push({ path: `${l1} > ${l2} > ${l3} > ${l4} > ${sku}`, label: sku });
+                                      });
                                     });
                                   });
                                 });
@@ -1893,7 +1940,7 @@ export default function App() {
                           ) : (
                             <div className="flex h-80">
                               {/* L1 */}
-                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                              <div className="w-1/5 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
                                     setSelectedFilterValue('全部一级类目');
@@ -1928,7 +1975,7 @@ export default function App() {
                                 ))}
                               </div>
                               {/* L2 */}
-                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                              <div className="w-1/5 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
                                     const val = categoryFilterPath[0] ? `${categoryFilterPath[0]} > 全部二级类目` : "全部二级类目";
@@ -1964,7 +2011,7 @@ export default function App() {
                                 ))}
                               </div>
                               {/* L3 */}
-                              <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
+                              <div className="w-1/5 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
                                     const val = categoryFilterPath[1] 
@@ -2002,7 +2049,7 @@ export default function App() {
                                 ))}
                               </div>
                               {/* L4 */}
-                              <div className="w-1/4 p-2 overflow-y-auto">
+                              <div className="w-1/5 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
                                     const val = categoryFilterPath[2]
@@ -2025,17 +2072,43 @@ export default function App() {
                                   <button
                                     key={l4}
                                     onClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], categoryFilterPath[2], l4]);
+                                    }}
+                                    onDoubleClick={() => {
+                                      setCategoryFilterPath([categoryFilterPath[0], categoryFilterPath[1], categoryFilterPath[2], l4]);
                                       setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > ${l4}`);
                                       setIsCategoryFilterOpen(false);
                                     }}
                                     className={cn(
                                       "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                      selectedFilterValue?.includes(l4) ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                      categoryFilterPath[3] === l4 ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                     )}
                                   >
                                     {l4}
                                   </button>
                                 ))}
+                              </div>
+                              {/* SKU */}
+                              <div className="w-1/5 p-2 overflow-y-auto">
+                                {categoryFilterPath[3] && (() => {
+                                  const match = categoryTree.find(c => c.l1 === categoryFilterPath[0] && c.l2 === categoryFilterPath[1] && c.l3 === categoryFilterPath[2] && c.l4 === categoryFilterPath[3]);
+                                  const skus = match?.skus || ['标准款', '升级款'];
+                                  return skus.map(sku => (
+                                    <button
+                                      key={sku}
+                                      onClick={() => {
+                                        setSelectedFilterValue(`${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > ${categoryFilterPath[3]} > ${sku}`);
+                                        setIsCategoryFilterOpen(false);
+                                      }}
+                                      className={cn(
+                                        "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
+                                        selectedFilterValue?.includes(sku) ? "bg-indigo-600 text-white" : "text-slate-600 hover:bg-slate-50"
+                                      )}
+                                    >
+                                      {sku}
+                                    </button>
+                                  ));
+                                })()}
                               </div>
                             </div>
                           )}
@@ -2349,7 +2422,14 @@ export default function App() {
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-slate-50 text-slate-500 text-[10px] font-bold uppercase tracking-wider border-b border-slate-300">
-                      <SortableHeader label="细分项" sortKey="id" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-slate-100/50" />
+                      <SortableHeader 
+                        label={selectedDimensionId === 'category' && (selectedFilterValue?.split(' > ').filter(p => !p.startsWith('全部')).length >= 4) ? 'SKU' : '细分项'} 
+                        sortKey="id" 
+                        currentSort={tableSortConfig} 
+                        onSort={handleTableSort} 
+                        align="center" 
+                        className="border-r border-slate-300 bg-slate-100/50" 
+                      />
                       <SortableHeader label="销售额" sortKey="salesAmount" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-indigo-50/30" />
                       <SortableHeader label="环比 (WoW)" sortKey="salesAmountWoW" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="bg-indigo-50/30" />
                       <SortableHeader label="同比 (YoY)" sortKey="salesAmountYoY" currentSort={tableSortConfig} onSort={handleTableSort} align="center" className="border-r border-slate-300 bg-indigo-50/30" />
@@ -2414,6 +2494,16 @@ export default function App() {
                                       )}>
                                         {item.id.includes(' > ') ? item.id.split(' > ').pop() : item.id}
                                       </span>
+                                      {selectedDimensionId === 'position' && item.id.includes(' > ') && (
+                                        <span className={cn(
+                                          "ml-1.5 px-1.5 py-0.5 rounded text-[10px] font-medium",
+                                          item.id.startsWith('业务') 
+                                            ? "bg-blue-50 text-blue-600 border border-blue-100" 
+                                            : "bg-amber-50 text-amber-600 border border-amber-100"
+                                        )}>
+                                          {item.id.startsWith('业务') ? '业务员' : '销售员'}
+                                        </span>
+                                      )}
                                       {dim.id === 'distributorId' && DISTRIBUTOR_GRADES[item.id] && (
                                         <span className={cn(
                                           "ml-1 px-1 rounded-[3px] text-[10px] font-bold text-white uppercase leading-tight",

@@ -42,6 +42,7 @@ export interface SalesRecord {
   categoryL2: string;
   categoryL3: string;
   categoryL4: string;
+  sku: string;
   salesAmount: number;
   salesVolume: number;
   costAmount: number;
