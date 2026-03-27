@@ -142,7 +142,7 @@ const CATEGORY_DATA: any =
             ]
         }
     },
-    "家居": {
+    "家具": {
         "板材浴缸": {
             "2025-板材浴缸": [
                 "白白云柔",
@@ -1182,6 +1182,8 @@ export default function App() {
   useEffect(() => {
     if (selectedDimensionId === 'storeName') {
       setSelectedFilterValue('全部店铺');
+    } else if (selectedDimensionId === 'category') {
+      setSelectedFilterValue('全部一级类目');
     } else {
       setSelectedFilterValue(null);
     }
@@ -1217,18 +1219,26 @@ export default function App() {
 
     result = result.filter(d => isWithinInterval(parseISO(d.date), { start, end }));
 
-    if (!selectedFilterValue || selectedFilterValue === '全部店铺') return result;
+    if (!selectedFilterValue || selectedFilterValue === '全部店铺' || selectedFilterValue === '全部一级类目') return result;
     
     return result.filter(d => {
       if (selectedDimensionId === 'position') {
         const [type, name] = selectedFilterValue.split(' > ');
-        if (!name) return d.businessOwner === type || d.salesperson === type;
+        if (!name || name.startsWith('全部')) return true;
         if (type === '业务') return d.businessOwner === name;
         if (type === '销售') return d.salesperson === name;
         return true;
       }
       if (selectedDimensionId === 'category') {
         const path = selectedFilterValue.split(' > ');
+        const lastPart = path[path.length - 1];
+        if (lastPart.startsWith('全部')) {
+          if (path.length === 1) return true;
+          if (path.length === 2) return d.categoryL1 === path[0];
+          if (path.length === 3) return d.categoryL1 === path[0] && d.categoryL2 === path[1];
+          if (path.length === 4) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2];
+          return true;
+        }
         if (path.length === 1) return d.categoryL1 === path[0];
         if (path.length === 2) return d.categoryL1 === path[0] && d.categoryL2 === path[1];
         if (path.length === 3) return d.categoryL1 === path[0] && d.categoryL2 === path[1] && d.categoryL3 === path[2];
@@ -1449,8 +1459,74 @@ export default function App() {
         // Initialize groups with all possible keys to ensure they appear in the table even with 0 data
         // If a specific value is filtered, we only show that one
         if (dim.id === 'all') {
-          if (selectedDimensionId === 'category' || selectedDimensionId === 'position') {
-            // Dynamic breakdown for category/position when in 'All' tab
+          if (selectedDimensionId === 'category') {
+            const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+            const effectivePath = path.filter(p => !p.startsWith('全部'));
+            const level = effectivePath.length;
+            
+            if (level === 0) {
+              if (selectedFilterValue === '全部二级类目') {
+                Object.keys(categories).forEach(l1 => {
+                  Object.keys(categories[l1] || {}).forEach(l2 => {
+                    groups[`${l1} > ${l2}`] = [];
+                  });
+                });
+              } else if (selectedFilterValue === '全部三级类目') {
+                Object.keys(categories).forEach(l1 => {
+                  Object.keys(categories[l1] || {}).forEach(l2 => {
+                    Object.keys(categories[l1]?.[l2] || {}).forEach(l3 => {
+                      groups[`${l1} > ${l2} > ${l3}`] = [];
+                    });
+                  });
+                });
+              } else if (selectedFilterValue === '全部四级类目') {
+                Object.keys(categories).forEach(l1 => {
+                  Object.keys(categories[l1] || {}).forEach(l2 => {
+                    Object.keys(categories[l1]?.[l2] || {}).forEach(l3 => {
+                      (categories[l1]?.[l2]?.[l3] || []).forEach(l4 => {
+                        groups[`${l1} > ${l2} > ${l3} > ${l4}`] = [];
+                      });
+                    });
+                  });
+                });
+              } else {
+                Object.keys(categories).forEach(val => {
+                  groups[val] = [];
+                });
+              }
+            } else if (level === 1) {
+              const prefix = effectivePath[0];
+              Object.keys(categories[prefix] || {}).forEach(val => {
+                groups[`${prefix} > ${val}`] = [];
+              });
+            } else if (level === 2) {
+              const prefix = `${effectivePath[0]} > ${effectivePath[1]}`;
+              Object.keys(categories[effectivePath[0]]?.[effectivePath[1]] || {}).forEach(val => {
+                groups[`${prefix} > ${val}`] = [];
+              });
+            } else if (level === 3) {
+              const prefix = `${effectivePath[0]} > ${effectivePath[1]} > ${effectivePath[2]}`;
+              (categories[effectivePath[0]]?.[effectivePath[1]]?.[effectivePath[2]] || []).forEach(val => {
+                groups[`${prefix} > ${val}`] = [];
+              });
+            }
+          } else if (selectedDimensionId === 'position') {
+            const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
+            const effectivePath = path.filter(p => !p.startsWith('全部'));
+            const level = effectivePath.length;
+            
+            let currentLevelKeys: string[] = [];
+            if (level === 0) {
+              currentLevelKeys = Object.keys(positions);
+            } else if (level === 1) {
+              currentLevelKeys = positions[effectivePath[0]] || [];
+            }
+            
+            const prefix = effectivePath.join(' > ');
+            currentLevelKeys.forEach(val => {
+              const key = prefix ? `${prefix} > ${val}` : val;
+              groups[key] = [];
+            });
           } else {
             const key = selectedFilterValue || '全部';
             groups[key] = [];
@@ -1468,12 +1544,21 @@ export default function App() {
           if (dim.id === 'all') {
             if (selectedDimensionId === 'category') {
               const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
-              let val = '';
-              if (path.length === 0) val = d.categoryL1;
-              else if (path.length === 1) val = d.categoryL2;
-              else if (path.length === 2) val = d.categoryL3;
-              else val = d.categoryL4;
-              key = selectedFilterValue ? `${selectedFilterValue} > ${val}` : val;
+              const effectivePath = path.filter(p => !p.startsWith('全部'));
+              const level = effectivePath.length;
+              
+              if (level === 0) {
+                if (selectedFilterValue === '全部二级类目') key = `${d.categoryL1} > ${d.categoryL2}`;
+                else if (selectedFilterValue === '全部三级类目') key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
+                else if (selectedFilterValue === '全部四级类目') key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+                else key = d.categoryL1;
+              } else if (level === 1) {
+                key = `${d.categoryL1} > ${d.categoryL2}`;
+              } else if (level === 2) {
+                key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3}`;
+              } else {
+                key = `${d.categoryL1} > ${d.categoryL2} > ${d.categoryL3} > ${d.categoryL4}`;
+              }
             } else if (selectedDimensionId === 'position') {
               const path = selectedFilterValue ? selectedFilterValue.split(' > ') : [];
               if (path.length === 0) {
@@ -1755,7 +1840,9 @@ export default function App() {
                         }}
                         className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-2.5 text-sm font-medium text-slate-700 focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 outline-none transition-all flex items-center justify-between"
                       >
-                        <span className="truncate">{selectedFilterValue || '全部类目'}</span>
+                        <span className="truncate">
+                          {selectedFilterValue ? (selectedFilterValue.includes(' > ') ? selectedFilterValue.split(' > ').pop() : selectedFilterValue) : '全部一级类目'}
+                        </span>
                         <ChevronDown size={14} className="text-slate-400" />
                       </button>
 
@@ -1809,16 +1896,16 @@ export default function App() {
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
-                                    setSelectedFilterValue(null);
+                                    setSelectedFilterValue('全部一级类目');
                                     setCategoryFilterPath([]);
                                     setIsCategoryFilterOpen(false);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                    !selectedFilterValue ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    selectedFilterValue === '全部一级类目' ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  全部类目
+                                  全部一级类目
                                 </button>
                                 {Object.keys(categories).map(l1 => (
                                   <button
@@ -1844,17 +1931,17 @@ export default function App() {
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
-                                    const val = categoryFilterPath[0] || null;
+                                    const val = categoryFilterPath[0] ? `${categoryFilterPath[0]} > 全部二级类目` : "全部二级类目";
                                     setSelectedFilterValue(val);
                                     setCategoryFilterPath(categoryFilterPath[0] ? [categoryFilterPath[0]] : []);
                                     setIsCategoryFilterOpen(false);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                    selectedFilterValue === (categoryFilterPath[0] || null) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    selectedFilterValue?.endsWith('全部二级类目') ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  全部类目
+                                  全部二级类目
                                 </button>
                                 {categoryFilterPath[0] && Object.keys(categories[categoryFilterPath[0]]).map(l2 => (
                                   <button
@@ -1880,19 +1967,19 @@ export default function App() {
                               <div className="w-1/4 border-r border-slate-100 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
-                                    const path = categoryFilterPath[1] 
-                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}`
-                                      : (categoryFilterPath[0] || null);
-                                    setSelectedFilterValue(path);
+                                    const val = categoryFilterPath[1] 
+                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > 全部三级类目`
+                                      : (categoryFilterPath[0] ? `${categoryFilterPath[0]} > 全部三级类目` : "全部三级类目");
+                                    setSelectedFilterValue(val);
                                     setCategoryFilterPath(categoryFilterPath[1] ? [categoryFilterPath[0], categoryFilterPath[1]] : (categoryFilterPath[0] ? [categoryFilterPath[0]] : []));
                                     setIsCategoryFilterOpen(false);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                    selectedFilterValue === (categoryFilterPath[1] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` : (categoryFilterPath[0] || null)) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    selectedFilterValue?.endsWith('全部三级类目') ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  全部类目
+                                  全部三级类目
                                 </button>
                                 {categoryFilterPath[1] && Object.keys(categories[categoryFilterPath[0]][categoryFilterPath[1]]).map(l3 => (
                                   <button
@@ -1918,21 +2005,21 @@ export default function App() {
                               <div className="w-1/4 p-2 overflow-y-auto">
                                 <button
                                   onClick={() => {
-                                    const path = categoryFilterPath[2]
-                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]}`
+                                    const val = categoryFilterPath[2]
+                                      ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]} > 全部四级类目`
                                       : (categoryFilterPath[1] 
-                                          ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` 
-                                          : (categoryFilterPath[0] || null));
-                                    setSelectedFilterValue(path);
+                                          ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > 全部四级类目` 
+                                          : (categoryFilterPath[0] ? `${categoryFilterPath[0]} > 全部四级类目` : "全部四级类目"));
+                                    setSelectedFilterValue(val);
                                     setCategoryFilterPath(categoryFilterPath[2] ? [categoryFilterPath[0], categoryFilterPath[1], categoryFilterPath[2]] : (categoryFilterPath[1] ? [categoryFilterPath[0], categoryFilterPath[1]] : (categoryFilterPath[0] ? [categoryFilterPath[0]] : [])));
                                     setIsCategoryFilterOpen(false);
                                   }}
                                   className={cn(
                                     "w-full text-left px-3 py-2 rounded-lg text-xs font-medium transition-colors",
-                                    selectedFilterValue === (categoryFilterPath[2] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]} > ${categoryFilterPath[2]}` : (categoryFilterPath[1] ? `${categoryFilterPath[0]} > ${categoryFilterPath[1]}` : (categoryFilterPath[0] || null))) ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
+                                    selectedFilterValue?.endsWith('全部四级类目') ? "bg-indigo-50 text-indigo-600" : "text-slate-600 hover:bg-slate-50"
                                   )}
                                 >
-                                  全部类目
+                                  全部四级类目
                                 </button>
                                 {categoryFilterPath[2] && (categories[categoryFilterPath[0]][categoryFilterPath[1]][categoryFilterPath[2]] as string[]).map(l4 => (
                                   <button
@@ -2304,7 +2391,7 @@ export default function App() {
                                 key={item.id}
                                 onClick={() => {
                                   if (isSelected) {
-                                    setSelectedFilterValue(null);
+                                    setSelectedFilterValue(selectedDimensionId === 'category' ? '全部一级类目' : null);
                                   } else {
                                     setSelectedFilterValue(item.id);
                                     if (dim.id !== 'all') {
@@ -2402,7 +2489,7 @@ export default function App() {
                 </div>
                 <div className="flex items-center gap-2">
                   <select className="bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 min-w-[120px]">
-                    <option>全部类目</option>
+                    <option>全部一级类目</option>
                   </select>
                 </div>
                 <div className="flex items-center gap-2">
