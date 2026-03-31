@@ -94,6 +94,7 @@ export interface MarketingPlanData {
   inquiryCost: number; // 询盘成本
   inquiryConversionRate: number; // 询盘转化率
   status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
+  mom?: Partial<Record<keyof Omit<MarketingPlanData, 'id' | 'planName' | 'status' | 'mom'>, number>>;
 }
 
 export interface KeywordAnalysisData {
@@ -111,6 +112,7 @@ export interface KeywordAnalysisData {
   inquiryCost: number; // 询盘成本
   inquiryConversionRate: number; // 询盘转化率
   action: string; // 建议操作
+  mom?: Partial<Record<keyof Omit<KeywordAnalysisData, 'id' | 'keyword' | 'action' | 'mom'>, number>>;
 }
 
 export interface LinkAnalysisData {
@@ -129,4 +131,39 @@ export interface LinkAnalysisData {
   inquiryConversionRate: number; // 询盘转化率
   roi: number; // 投入产出比
   status: '优秀' | '良好' | '一般' | '待优化'; // 状态评估
+  mom?: Partial<Record<keyof Omit<LinkAnalysisData, 'id' | 'productId' | 'status' | 'mom'>, number>>;
+}
+
+export interface CustomerMaintenanceData {
+  id: string;
+  customerName: string; // 客户名称 (分销商)
+  storeAttribution: string; // 店铺归属
+  buyerId: string; // 买家ID
+  orderAccount: string; // 下单账号
+  customerGrade: string; // 客户等级
+  salesAmount: number; // 销售额
+  customerCategory: string; // 客户分类
+  customerType: string; // 客户类型
+  sourceChannel: string; // 来源渠道
+  visitDate: string; // 拜访日期
+  customerSalesChannel: string; // 客户销售渠道
+  wechatRemark: string; // 客户微信备注名
+  wechatId: string; // 客户微信号
+  wechatAccount: string; // 客户微信账号
+  groupName: string; // 客户群名称
+  realName: string; // 客户姓名
+  idCard: string; // 客户身份证
+  phoneNumber: string; // 手机号
+  gender: string; // 性别
+  birthday: string; // 生日
+  customerStoreName: string; // 客户店铺名
+  productCategory: string; // 产品类目
+  companyName: string; // 客户公司名
+  address: string; // 客户地址
+  customerPrice: string; // 客户价格
+  taxPoint: string; // 发票税点
+  shippingRequirement: string; // 发货要求
+  isInfoComplete: boolean; // 信息是否完善
+  remarks: string; // 备注信息
+  dailyTrackingRemarks: string; // 日常跟踪备注
 }

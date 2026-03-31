@@ -5,7 +5,7 @@ import { format, subDays, startOfWeek, endOfWeek, startOfMonth, endOfMonth } fro
 import { 
   TrendingUp, TrendingDown, MousePointer2, Eye, Target, 
   ShoppingCart, Link as LinkIcon, AlertCircle, DollarSign,
-  ChevronDown, Calendar, Store, Megaphone, Filter, Loader2,
+  ChevronDown, ChevronUp, Calendar, Store, Megaphone, Filter, Loader2,
   ArrowLeft, Search, BarChart3
 } from 'lucide-react';
 import { 
@@ -94,13 +94,13 @@ const getTrendData = (itemId: string, start: Date | null, end: Date | null) => {
 };
 
 const METRIC_CONFIG = [
-  { id: 'spend', label: '消耗 (元)', color: '#6366f1' },
-  { id: 'impressions', label: '展现数', color: '#10b981' },
-  { id: 'clicks', label: '点击数', color: '#3b82f6' },
-  { id: 'ctr', label: '点击率 (%)', color: '#f59e0b' },
-  { id: 'cpc', label: '平均点击花费', color: '#f43f5e' },
-  { id: 'inquiryConversionRate', label: '询盘转化率', color: '#8b5cf6' },
-  { id: 'inquiryCost', label: '询盘成本', color: '#0891b2' },
+  { id: 'spend', label: '消耗/环比', color: '#6366f1' },
+  { id: 'impressions', label: '展现数/环比', color: '#10b981' },
+  { id: 'clicks', label: '点击数/环比', color: '#3b82f6' },
+  { id: 'ctr', label: '点击率/环比', color: '#f59e0b' },
+  { id: 'cpc', label: '平均点击花费/环比', color: '#f43f5e' },
+  { id: 'inquiryConversionRate', label: '询盘转化率/环比', color: '#8b5cf6' },
+  { id: 'inquiryCost', label: '询盘成本/环比', color: '#0891b2' },
 ];
 
 export default function DigitalMarketingAnalysis() {
@@ -121,6 +121,7 @@ export default function DigitalMarketingAnalysis() {
 
   // Data State
   const [isLoading, setIsLoading] = useState(false);
+  const [sortConfig, setSortConfig] = useState<{ key: string; direction: 'asc' | 'desc' } | null>(null);
 
   // Trend View State
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
@@ -202,13 +203,13 @@ export default function DigitalMarketingAnalysis() {
     };
 
     return [
-      { id: 'spend', label: '消耗 (元)', value: `¥${Math.floor(totals.spend).toLocaleString()}`, trend: randomTrend(1), icon: <DollarSign size={20} />, color: 'text-blue-600' },
-      { id: 'impressions', label: '展现数', value: totals.impressions.toLocaleString(), trend: randomTrend(2), icon: <Eye size={20} />, color: 'text-indigo-600' },
-      { id: 'clicks', label: '点击数', value: totals.clicks.toLocaleString(), trend: randomTrend(3), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
-      { id: 'ctr', label: '点击率', value: `${ctr.toFixed(2)}%`, trend: randomTrend(4), icon: <TrendingUp size={20} />, color: 'text-orange-500' },
-      { id: 'cpc', label: '平均点击花费', value: `¥${cpc.toFixed(2)}`, trend: randomTrend(5), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
-      { id: 'inquiryConversionRate', label: '询盘转化率', value: `${inquiryConversionRate.toFixed(2)}%`, trend: randomTrend(9), icon: <Target size={20} />, color: 'text-emerald-600' },
-      { id: 'inquiryCost', label: '询盘成本', value: `¥${inquiryCost.toFixed(2)}`, trend: randomTrend(10), icon: <DollarSign size={20} />, color: 'text-cyan-600' },
+      { id: 'spend', label: '消耗/环比', value: `¥${Math.floor(totals.spend).toLocaleString()}`, trend: randomTrend(1), icon: <DollarSign size={20} />, color: 'text-blue-600' },
+      { id: 'impressions', label: '展现数/环比', value: totals.impressions.toLocaleString(), trend: randomTrend(2), icon: <Eye size={20} />, color: 'text-indigo-600' },
+      { id: 'clicks', label: '点击数/环比', value: totals.clicks.toLocaleString(), trend: randomTrend(3), icon: <MousePointer2 size={20} />, color: 'text-blue-500' },
+      { id: 'ctr', label: '点击率/环比', value: `${ctr.toFixed(2)}%`, trend: randomTrend(4), icon: <TrendingUp size={20} />, color: 'text-orange-500' },
+      { id: 'cpc', label: '平均点击花费/环比', value: `¥${cpc.toFixed(2)}`, trend: randomTrend(5), icon: <TrendingDown size={20} />, color: 'text-rose-500' },
+      { id: 'inquiryConversionRate', label: '询盘转化率/环比', value: `${inquiryConversionRate.toFixed(2)}%`, trend: randomTrend(9), icon: <Target size={20} />, color: 'text-emerald-600' },
+      { id: 'inquiryCost', label: '询盘成本/环比', value: `¥${inquiryCost.toFixed(2)}`, trend: randomTrend(10), icon: <DollarSign size={20} />, color: 'text-cyan-600' },
     ];
   }, [activeTab, marketingPlanData, keywordAnalysisData, linkAnalysisData]);
 
@@ -233,9 +234,112 @@ export default function DigitalMarketingAnalysis() {
     });
   };
 
+  useEffect(() => {
+    setSortConfig(null);
+  }, [activeTab]);
+
+  const handleSort = (key: string) => {
+    setSortConfig(prev => {
+      if (prev?.key === key) {
+        if (prev.direction === 'asc') return { key, direction: 'desc' };
+        return null;
+      }
+      return { key, direction: 'asc' };
+    });
+  };
+
+  const sortedMarketingPlanData = useMemo(() => {
+    if (!sortConfig) return marketingPlanData;
+    return [...marketingPlanData].sort((a, b) => {
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? bValue - aValue : aValue - bValue;
+      }
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+      }
+      return 0;
+    });
+  }, [marketingPlanData, sortConfig]);
+
+  const sortedKeywordAnalysisData = useMemo(() => {
+    if (!sortConfig) return keywordAnalysisData;
+    return [...keywordAnalysisData].sort((a, b) => {
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? bValue - aValue : aValue - bValue;
+      }
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+      }
+      return 0;
+    });
+  }, [keywordAnalysisData, sortConfig]);
+
+  const sortedLinkAnalysisData = useMemo(() => {
+    if (!sortConfig) return linkAnalysisData;
+    return [...linkAnalysisData].sort((a, b) => {
+      const aValue = (a as any)[sortConfig.key];
+      const bValue = (b as any)[sortConfig.key];
+      if (typeof aValue === 'number' && typeof bValue === 'number') {
+        return sortConfig.direction === 'asc' ? bValue - aValue : aValue - bValue;
+      }
+      if (typeof aValue === 'string' && typeof bValue === 'string') {
+        return sortConfig.direction === 'asc' ? bValue.localeCompare(aValue) : aValue.localeCompare(bValue);
+      }
+      return 0;
+    });
+  }, [linkAnalysisData, sortConfig]);
+
+  const SortableHeader = ({ label, sortKey, className }: { label: string; sortKey: string; className?: string }) => {
+    const isActive = sortConfig?.key === sortKey;
+    return (
+      <th 
+        className={cn(
+          "px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors group",
+          className
+        )}
+        onClick={() => handleSort(sortKey)}
+      >
+        <div className="flex items-center gap-1.5">
+          <span>{label}</span>
+          <div className="flex flex-col -space-y-1">
+            <ChevronUp 
+              size={10} 
+              className={cn(
+                isActive && sortConfig.direction === 'asc' ? "text-indigo-600" : "text-slate-300 group-hover:text-slate-400"
+              )} 
+            />
+            <ChevronDown 
+              size={10} 
+              className={cn(
+                isActive && sortConfig.direction === 'desc' ? "text-indigo-600" : "text-slate-300 group-hover:text-slate-400"
+              )} 
+            />
+          </div>
+        </div>
+      </th>
+    );
+  };
+
   const handleItemClick = (id: string, name: string) => {
     setSelectedItemId(id);
     setSelectedItemName(name);
+  };
+
+  const TrendIndicator = ({ value }: { value?: number }) => {
+    if (value === undefined || value === 0) return null;
+    return (
+      <div className={cn(
+        "flex items-center gap-0.5 text-[10px] font-bold mt-0.5",
+        value > 0 ? "text-rose-500" : "text-emerald-500"
+      )}>
+        {value > 0 ? <TrendingUp size={10} /> : <TrendingDown size={10} />}
+        <span>{Math.abs(value)}%</span>
+      </div>
+    );
   };
 
   // Custom Input for DatePicker
@@ -395,26 +499,26 @@ export default function DigitalMarketingAnalysis() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
           {summaryMetrics.map((metric, idx) => (
             <div key={idx} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm hover:shadow-md transition-shadow">
-              <div className="flex items-center justify-between mb-3">
+              <div className="flex items-center justify-between mb-2">
                 <div className={cn("w-10 h-10 rounded-xl flex items-center justify-center bg-slate-50", metric.color)}>
                   {metric.icon}
                 </div>
-                {metric.trend !== 0 && (
+              </div>
+              <p className="text-slate-500 text-[10px] font-bold uppercase tracking-wider mb-1">{metric.label}</p>
+              <div className="space-y-1">
+                <h4 className="text-xl font-bold text-slate-900 leading-none">{metric.value}</h4>
+                {metric.trend !== 0 ? (
                   <div className={cn(
-                    "text-[10px] font-bold px-1.5 py-0.5 rounded-md",
-                    metric.trend > 0 ? "bg-emerald-50 text-emerald-600" : "bg-rose-50 text-rose-600"
+                    "flex items-center gap-1 text-xs font-bold",
+                    metric.trend > 0 ? "text-rose-500" : "text-emerald-500"
                   )}>
-                    {metric.trend > 0 ? '+' : ''}{metric.trend}%
+                    {metric.trend > 0 ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+                    <span>{Math.abs(metric.trend)}%</span>
                   </div>
-                )}
-                {metric.trend === 0 && (
-                  <div className="text-[10px] font-bold px-1.5 py-0.5 rounded-md bg-slate-50 text-slate-400">
-                    稳定
-                  </div>
+                ) : (
+                  <div className="text-xs font-bold text-slate-400">稳定</div>
                 )}
               </div>
-              <p className="text-slate-500 text-xs font-medium mb-1">{metric.label}</p>
-              <h4 className="text-lg font-bold text-slate-900">{metric.value}</h4>
             </div>
           ))}
         </div>
@@ -519,40 +623,73 @@ export default function DigitalMarketingAnalysis() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">营销方案</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
+                    <SortableHeader label="营销方案" sortKey="planName" />
+                    <SortableHeader label="消耗/环比" sortKey="spend" />
+                    <SortableHeader label="展现数/环比" sortKey="impressions" />
+                    <SortableHeader label="点击数/环比" sortKey="clicks" />
+                    <SortableHeader label="点击率/环比" sortKey="ctr" />
+                    <SortableHeader label="平均点击花费/环比" sortKey="cpc" />
+                    <SortableHeader label="线索量/环比" sortKey="leads" />
+                    <SortableHeader label="线索转化率/环比" sortKey="leadConversionRate" />
+                    <SortableHeader label="线索成本/环比" sortKey="leadCost" />
+                    <SortableHeader label="总询盘量/环比" sortKey="inquiries" />
+                    <SortableHeader label="询盘成本/环比" sortKey="inquiryCost" />
+                    <SortableHeader label="询盘转化率/环比" sortKey="inquiryConversionRate" />
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {marketingPlanData.map((row) => (
+                  {sortedMarketingPlanData.map((row) => (
                     <tr 
                       key={row.id} 
                       onClick={() => handleItemClick(row.id, row.planName)}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
                       <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.planName}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">
+                        <div>¥{row.spend.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.spend} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.impressions.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.impressions} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.clicks.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.clicks} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.ctr}%</div>
+                        <TrendIndicator value={row.mom?.ctr} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.cpc}</div>
+                        <TrendIndicator value={row.mom?.cpc} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.leads}</div>
+                        <TrendIndicator value={row.mom?.leads} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.leadConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.leadConversionRate} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.leadCost}</div>
+                        <TrendIndicator value={row.mom?.leadCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.inquiries}</div>
+                        <TrendIndicator value={row.mom?.inquiries} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.inquiryCost}</div>
+                        <TrendIndicator value={row.mom?.inquiryCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.inquiryConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.inquiryConversionRate} />
+                      </td>
                       <td className="px-6 py-4">
                         <span className={cn(
                           "px-2.5 py-1 rounded-full text-[10px] font-bold",
@@ -574,40 +711,73 @@ export default function DigitalMarketingAnalysis() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">关键词</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗 (元)</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
+                    <SortableHeader label="关键词" sortKey="keyword" />
+                    <SortableHeader label="消耗/环比" sortKey="spend" />
+                    <SortableHeader label="展现数/环比" sortKey="impressions" />
+                    <SortableHeader label="点击数/环比" sortKey="clicks" />
+                    <SortableHeader label="点击率/环比" sortKey="ctr" />
+                    <SortableHeader label="平均点击花费/环比" sortKey="cpc" />
+                    <SortableHeader label="线索量/环比" sortKey="leads" />
+                    <SortableHeader label="线索转化率/环比" sortKey="leadConversionRate" />
+                    <SortableHeader label="线索成本/环比" sortKey="leadCost" />
+                    <SortableHeader label="总询盘量/环比" sortKey="inquiries" />
+                    <SortableHeader label="询盘成本/环比" sortKey="inquiryCost" />
+                    <SortableHeader label="询盘转化率/环比" sortKey="inquiryConversionRate" />
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">建议操作</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {keywordAnalysisData.map((row) => (
+                  {sortedKeywordAnalysisData.map((row) => (
                     <tr 
                       key={row.id} 
                       onClick={() => handleItemClick(row.id, row.keyword)}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
                       <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.keyword}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">
+                        <div>¥{row.spend.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.spend} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.impressions.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.impressions} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.clicks.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.clicks} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.ctr}%</div>
+                        <TrendIndicator value={row.mom?.ctr} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.cpc}</div>
+                        <TrendIndicator value={row.mom?.cpc} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.leads}</div>
+                        <TrendIndicator value={row.mom?.leads} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.leadConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.leadConversionRate} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.leadCost}</div>
+                        <TrendIndicator value={row.mom?.leadCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.inquiries}</div>
+                        <TrendIndicator value={row.mom?.inquiries} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.inquiryCost}</div>
+                        <TrendIndicator value={row.mom?.inquiryCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.inquiryConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.inquiryConversionRate} />
+                      </td>
                       <td className="px-6 py-4">
                         <span className="px-2.5 py-1 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600">
                           {row.action}
@@ -623,42 +793,78 @@ export default function DigitalMarketingAnalysis() {
               <table className="w-full text-left border-collapse">
                 <thead>
                   <tr className="bg-slate-50/50 border-b border-slate-100">
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">商品ID</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">消耗 (元)</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">展现数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击数</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">点击率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">平均点击花费</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索转化率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">线索成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">总询盘量</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘成本</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">询盘转化率</th>
-                    <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">投入产出比 (ROI)</th>
+                    <SortableHeader label="商品ID" sortKey="productId" />
+                    <SortableHeader label="消耗/环比" sortKey="spend" />
+                    <SortableHeader label="展现数/环比" sortKey="impressions" />
+                    <SortableHeader label="点击数/环比" sortKey="clicks" />
+                    <SortableHeader label="点击率/环比" sortKey="ctr" />
+                    <SortableHeader label="平均点击花费/环比" sortKey="cpc" />
+                    <SortableHeader label="线索量/环比" sortKey="leads" />
+                    <SortableHeader label="线索转化率/环比" sortKey="leadConversionRate" />
+                    <SortableHeader label="线索成本/环比" sortKey="leadCost" />
+                    <SortableHeader label="总询盘量/环比" sortKey="inquiries" />
+                    <SortableHeader label="询盘成本/环比" sortKey="inquiryCost" />
+                    <SortableHeader label="询盘转化率/环比" sortKey="inquiryConversionRate" />
+                    <SortableHeader label="投入产出比/环比" sortKey="roi" />
                     <th className="px-6 py-4 text-[11px] font-bold text-slate-400 uppercase tracking-wider">状态评估</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-50">
-                  {linkAnalysisData.map((row) => (
+                  {sortedLinkAnalysisData.map((row) => (
                     <tr 
                       key={row.id} 
                       onClick={() => handleItemClick(row.id, row.productId)}
                       className="hover:bg-slate-50/50 transition-colors group cursor-pointer"
                     >
                       <td className="px-6 py-4 text-sm font-bold text-slate-700">{row.productId}</td>
-                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">¥{row.spend.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.impressions.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.clicks.toLocaleString()}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.ctr}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.cpc}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.leads}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.leadConversionRate}%</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.leadCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">{row.inquiries}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">¥{row.inquiryCost}</td>
-                      <td className="px-6 py-4 text-sm text-slate-600">{row.inquiryConversionRate}%</td>
-                      <td className="px-6 py-4 text-sm font-bold text-emerald-600">{row.roi}</td>
+                      <td className="px-6 py-4 text-sm font-bold text-indigo-600">
+                        <div>¥{row.spend.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.spend} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.impressions.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.impressions} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.clicks.toLocaleString()}</div>
+                        <TrendIndicator value={row.mom?.clicks} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.ctr}%</div>
+                        <TrendIndicator value={row.mom?.ctr} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.cpc}</div>
+                        <TrendIndicator value={row.mom?.cpc} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.leads}</div>
+                        <TrendIndicator value={row.mom?.leads} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.leadConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.leadConversionRate} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.leadCost}</div>
+                        <TrendIndicator value={row.mom?.leadCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600 font-bold">
+                        <div>{row.inquiries}</div>
+                        <TrendIndicator value={row.mom?.inquiries} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>¥{row.inquiryCost}</div>
+                        <TrendIndicator value={row.mom?.inquiryCost} />
+                      </td>
+                      <td className="px-6 py-4 text-sm text-slate-600">
+                        <div>{row.inquiryConversionRate}%</div>
+                        <TrendIndicator value={row.mom?.inquiryConversionRate} />
+                      </td>
+                      <td className="px-6 py-4 text-sm font-bold text-emerald-600">
+                        <div>{row.roi}</div>
+                        <TrendIndicator value={row.mom?.roi} />
+                      </td>
                       <td className="px-6 py-4">
                         <span className={cn(
                           "px-2.5 py-1 rounded-full text-[10px] font-bold",

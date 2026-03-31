@@ -1,6 +1,6 @@
 import { 
   SalesRecord, CompetitiveProduct, StrategicCategory, KeywordData,
-  MarketingPlanData, KeywordAnalysisData, LinkAnalysisData
+  MarketingPlanData, KeywordAnalysisData, LinkAnalysisData, CustomerMaintenanceData
 } from './types';
 import { subDays, startOfMonth, format, subMonths, subYears, startOfWeek } from 'date-fns';
 
@@ -27,7 +27,20 @@ export const generateMarketingPlanData = (): MarketingPlanData[] => {
       inquiries,
       inquiryCost: Number((spend / inquiries).toFixed(2)),
       inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
-      status: statuses[Math.floor(Math.random() * statuses.length)]
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      mom: {
+        spend: Number((Math.random() * 40 - 10).toFixed(1)),
+        impressions: Number((Math.random() * 40 - 10).toFixed(1)),
+        clicks: Number((Math.random() * 40 - 10).toFixed(1)),
+        ctr: Number((Math.random() * 40 - 10).toFixed(1)),
+        cpc: Number((Math.random() * 40 - 10).toFixed(1)),
+        leads: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiries: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+      }
     };
   });
 };
@@ -54,7 +67,20 @@ export const generateKeywordAnalysisData = (count: number = 15): KeywordAnalysis
       inquiries,
       inquiryCost: Number((spend / inquiries).toFixed(2)),
       inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
-      action: actions[Math.floor(Math.random() * actions.length)]
+      action: actions[Math.floor(Math.random() * actions.length)],
+      mom: {
+        spend: Number((Math.random() * 40 - 10).toFixed(1)),
+        impressions: Number((Math.random() * 40 - 10).toFixed(1)),
+        clicks: Number((Math.random() * 40 - 10).toFixed(1)),
+        ctr: Number((Math.random() * 40 - 10).toFixed(1)),
+        cpc: Number((Math.random() * 40 - 10).toFixed(1)),
+        leads: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiries: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+      }
     };
   });
 };
@@ -81,7 +107,21 @@ export const generateLinkAnalysisData = (count: number = 12): LinkAnalysisData[]
       inquiryCost: Number((spend / inquiries).toFixed(2)),
       inquiryConversionRate: Number((inquiries / clicks * 100).toFixed(2)),
       roi: Number((2 + Math.random() * 5).toFixed(2)),
-      status: statuses[Math.floor(Math.random() * statuses.length)]
+      status: statuses[Math.floor(Math.random() * statuses.length)],
+      mom: {
+        spend: Number((Math.random() * 40 - 10).toFixed(1)),
+        impressions: Number((Math.random() * 40 - 10).toFixed(1)),
+        clicks: Number((Math.random() * 40 - 10).toFixed(1)),
+        ctr: Number((Math.random() * 40 - 10).toFixed(1)),
+        cpc: Number((Math.random() * 40 - 10).toFixed(1)),
+        leads: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+        leadCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiries: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryCost: Number((Math.random() * 40 - 10).toFixed(1)),
+        inquiryConversionRate: Number((Math.random() * 40 - 10).toFixed(1)),
+        roi: Number((Math.random() * 40 - 10).toFixed(1)),
+      }
     };
   });
 };
@@ -473,6 +513,55 @@ export const generateMockData = (count: number = 1200): SalesRecord[] => {
       costAmount: amount * (0.6 + Math.random() * 0.2), // 60-80% cost
       businessOwner: businessOwners[Math.floor(Math.random() * businessOwners.length)],
       salesperson: salespeople[Math.floor(Math.random() * salespeople.length)],
+    });
+  }
+  return data;
+};
+
+export const generateCustomerMaintenanceData = (count: number): CustomerMaintenanceData[] => {
+  const data: CustomerMaintenanceData[] = [];
+  const distributors = ['阿里-义乌市益瑞康科技有限公司', '阿里-义乌市青色贸易有限公司', '阿里-义乌市起乾商贸有限公司', '阿里-义乌市嘉诺进出口有限公司', '阿里-义乌市领阅贸易有限公司'];
+  const stores = ['店铺A', '店铺B', '店铺C', '店铺D'];
+  const grades = ['S', 'A', 'B', 'C', 'D'];
+  const categories = ['2类铁单', '7类强单', '3+类高意向', '3类有意向', '3-类意向不明', '1类已付款', '拿样客户', '0类未触碰', '定制客户'];
+  const types = ['代发', '批发', '散户', '定制'];
+  const channels = ['转介绍', '展会', '阿里转接', '站外拉新', '线下开发'];
+  const salesChannels = ['亚马逊', 'temu', '速卖通', '希音', 'TikTok', '虾皮', '美客多', '沃尔玛', 'Ozon', '阿里国际站', '阿里', '拼多多', '淘宝', '京东', '唯品会', '私域', '快手', '小红书', '抖音', '得物', '微信视频号'];
+  const genders = ['男', '女'];
+
+  for (let i = 0; i < count; i++) {
+    data.push({
+      id: `cust_${i}`,
+      customerName: distributors[Math.floor(Math.random() * distributors.length)],
+      storeAttribution: stores[Math.floor(Math.random() * stores.length)],
+      buyerId: `buyer_${Math.floor(Math.random() * 10000)}`,
+      orderAccount: `acc_${Math.floor(Math.random() * 10000)}`,
+      customerGrade: grades[Math.floor(Math.random() * grades.length)],
+      salesAmount: Math.floor(Math.random() * 100000),
+      customerCategory: categories[Math.floor(Math.random() * categories.length)],
+      customerType: types[Math.floor(Math.random() * types.length)],
+      sourceChannel: channels[Math.floor(Math.random() * channels.length)],
+      visitDate: `2026.${Math.floor(Math.random() * 12) + 1}月拜访`,
+      customerSalesChannel: salesChannels[Math.floor(Math.random() * salesChannels.length)],
+      wechatRemark: `备注_${i}`,
+      wechatId: `wxid_${Math.floor(Math.random() * 10000)}`,
+      wechatAccount: `wxacc_${Math.floor(Math.random() * 10000)}`,
+      groupName: `群_${Math.floor(Math.random() * 100)}`,
+      realName: `姓名_${i}`,
+      idCard: `33010119900101${Math.floor(Math.random() * 10000)}`,
+      phoneNumber: `138${Math.floor(Math.random() * 100000000)}`,
+      gender: genders[Math.floor(Math.random() * genders.length)],
+      birthday: `1990-${Math.floor(Math.random() * 12) + 1}-${Math.floor(Math.random() * 28) + 1}`,
+      customerStoreName: `客户店铺_${i}`,
+      productCategory: `类目_${Math.floor(Math.random() * 10)}`,
+      companyName: `公司_${i}`,
+      address: `地址_${i}`,
+      customerPrice: `${Math.floor(Math.random() * 10) + 1}个点`,
+      taxPoint: `${Math.floor(Math.random() * 10)}%`,
+      shippingRequirement: `发货要求_${i}`,
+      isInfoComplete: Math.random() > 0.5,
+      remarks: `备注_${i}`,
+      dailyTrackingRemarks: `日常跟踪备注_${i}`,
     });
   }
   return data;

@@ -22,6 +22,7 @@ import { SalesRecord, CompetitiveProduct } from './types';
 import { generateMockData, generateCompetitiveData, storeAttributions, POSITIONS_DATA, categoryTree } from './mockData';
 import StrategicMap from './components/StrategicMap';
 import DigitalMarketingAnalysis from './components/DigitalMarketingAnalysis';
+import CustomerMaintenance from './components/CustomerMaintenance';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -2900,6 +2901,8 @@ export default function App() {
           <StrategicMap />
         ) : activeMenu === '数字营销分析' ? (
           <DigitalMarketingAnalysis />
+        ) : activeMenu === '客户维护' ? (
+          <CustomerMaintenance />
         ) : (
           <div className="flex-1 flex items-center justify-center p-8">
             <div className="text-center space-y-4 max-w-md">
