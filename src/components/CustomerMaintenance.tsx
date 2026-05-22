@@ -159,12 +159,12 @@ const CustomerMaintenance: React.FC = () => {
                       ) : col.key === 'customerGrade' ? (
                         <span className={cn(
                           "px-2 py-0.5 rounded text-[10px] font-bold text-white",
-                          row[col.key] === 'S' ? "bg-rose-500" :
-                          row[col.key] === 'A' ? "bg-amber-500" :
-                          row[col.key] === 'B' ? "bg-emerald-500" :
-                          row[col.key] === 'C' ? "bg-blue-500" : "bg-slate-400"
+                          row[col.key] === '5级' ? "bg-rose-500" :
+                          row[col.key] === '4级' ? "bg-amber-500" :
+                          row[col.key] === '3级' ? "bg-emerald-500" :
+                          row[col.key] === '2级' ? "bg-blue-500" : "bg-slate-500"
                         )}>
-                          {row[col.key]}级
+                          {row[col.key]}
                         </span>
                       ) : col.key === 'isInfoComplete' ? (
                         <span className={cn(

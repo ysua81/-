@@ -489,15 +489,42 @@ export const generateMockData = (count: number = 1200): SalesRecord[] => {
     // If trend < 1, newer will be smaller.
     const timeWeight = Math.pow(trendFactor, (400 - daysAgo) / 400);
     
+    // To ensure distributors span all 5 grades exactly according to style guidelines:
+    // 5级: 销售额50万以上
+    // 4级: 10-50万
+    // 3级: 1-10万
+    // 2级: 1千-1万
+    // 1级: 1千以下
+    const distRandom = Math.random();
+    let distributorId = '分销商E';
+    let multiplier = 1;
+    
+    if (distRandom < 0.35) {
+      distributorId = '分销商A'; // target 5级
+      multiplier = 5.0; // about 350 orders * 600 * 5 = 1,050,000 (well above 50万)
+    } else if (distRandom < 0.65) {
+      distributorId = '分销商B'; // target 4级
+      multiplier = 1.6; // about 300 orders * 600 * 1.6 = 288,000 (between 10-50万)
+    } else if (distRandom < 0.85) {
+      distributorId = '分销商C'; // target 3级
+      multiplier = 0.4; // about 200 orders * 600 * 0.4 = 48,000 (between 1-10万)
+    } else if (distRandom < 0.96) {
+      distributorId = '分销商D'; // target 2级
+      multiplier = 0.08; // about 110 orders * 600 * 0.08 = 5,280 (between 1千-1万)
+    } else {
+      distributorId = '分销商E'; // target 1级
+      multiplier = 0.012; // about 40 orders * 600 * 0.012 = 288 (under 1千)
+    }
+
     const baseAmount = Math.floor(Math.random() * 1000) + 100;
-    const amount = Math.floor(baseAmount * timeWeight);
+    const amount = Math.floor(baseAmount * timeWeight * multiplier);
     
     const baseVolume = Math.floor(Math.random() * 20) + 1;
     const volume = Math.max(1, Math.floor(baseVolume * timeWeight));
     
     data.push({
       id: `rec_${i}`,
-      distributorId: distributors[Math.floor(Math.random() * distributors.length)],
+      distributorId,
       storeName: storeAttributions[Math.floor(Math.random() * storeAttributions.length)],
       platform: platforms[Math.floor(Math.random() * platforms.length)],
       isWholesale: wholesaleTypes[Math.floor(Math.random() * wholesaleTypes.length)],
@@ -522,7 +549,6 @@ export const generateCustomerMaintenanceData = (count: number): CustomerMaintena
   const data: CustomerMaintenanceData[] = [];
   const distributors = ['阿里-义乌市益瑞康科技有限公司', '阿里-义乌市青色贸易有限公司', '阿里-义乌市起乾商贸有限公司', '阿里-义乌市嘉诺进出口有限公司', '阿里-义乌市领阅贸易有限公司'];
   const stores = ['店铺A', '店铺B', '店铺C', '店铺D'];
-  const grades = ['S', 'A', 'B', 'C', 'D'];
   const categories = ['2类铁单', '7类强单', '3+类高意向', '3类有意向', '3-类意向不明', '1类已付款', '拿样客户', '0类未触碰', '定制客户'];
   const types = ['代发', '批发', '散户', '定制'];
   const channels = ['转介绍', '展会', '阿里转接', '站外拉新', '线下开发'];
@@ -530,14 +556,21 @@ export const generateCustomerMaintenanceData = (count: number): CustomerMaintena
   const genders = ['男', '女'];
 
   for (let i = 0; i < count; i++) {
+    const csAmount = Math.floor(Math.random() * 600000); // up to 600k
+    let csGrade = '1级';
+    if (csAmount >= 500000) csGrade = '5级';
+    else if (csAmount >= 100000) csGrade = '4级';
+    else if (csAmount >= 10000) csGrade = '3级';
+    else if (csAmount >= 1000) csGrade = '2级';
+
     data.push({
       id: `cust_${i}`,
       customerName: distributors[Math.floor(Math.random() * distributors.length)],
       storeAttribution: stores[Math.floor(Math.random() * stores.length)],
       buyerId: `buyer_${Math.floor(Math.random() * 10000)}`,
       orderAccount: `acc_${Math.floor(Math.random() * 10000)}`,
-      customerGrade: grades[Math.floor(Math.random() * grades.length)],
-      salesAmount: Math.floor(Math.random() * 100000),
+      customerGrade: csGrade,
+      salesAmount: csAmount,
       customerCategory: categories[Math.floor(Math.random() * categories.length)],
       customerType: types[Math.floor(Math.random() * types.length)],
       sourceChannel: channels[Math.floor(Math.random() * channels.length)],
